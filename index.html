@@ -1,0 +1,2827 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Pop Clicker: a balloon-popping idle game with needle-wielding monkeys.">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+<title>Pop Clicker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@700;900&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+  :root {
+    --bg: #eef0f5;
+    --panel: #e3e6ee;
+    --card: #f8f9fc;
+    --line: #cfd3de;
+    --ink: #1c1f2b;
+    --muted: #666b80;
+    --accent: #e8323c;
+    --good: #1f8a45;
+    --shadow: rgba(28, 31, 43, 0.14);
+    --spot: rgba(255, 255, 255, 0.85);
+    --veil: rgba(238, 240, 245, 0.84);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #13151c;
+      --panel: #1b1e28;
+      --card: #232736;
+      --line: #313649;
+      --ink: #eef0f6;
+      --muted: #9095aa;
+      --accent: #ff5a62;
+      --good: #4fd17c;
+      --shadow: rgba(0, 0, 0, 0.4);
+      --spot: rgba(255, 244, 225, 0.08);
+      --veil: rgba(19, 21, 28, 0.8);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #13151c;
+    --panel: #1b1e28;
+    --card: #232736;
+    --line: #313649;
+    --ink: #eef0f6;
+    --muted: #9095aa;
+    --accent: #ff5a62;
+    --good: #4fd17c;
+    --shadow: rgba(0, 0, 0, 0.4);
+    --spot: rgba(255, 244, 225, 0.08);
+    --veil: rgba(19, 21, 28, 0.8);
+  }
+
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Nunito", "Segoe UI", system-ui, sans-serif;
+    font-size: 15px;
+    overflow: hidden;
+  }
+  main {
+    position: relative; z-index: 1;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    padding-inline: 16px;
+  }
+  .display { font-family: "Fredoka", "Arial Rounded MT Bold", system-ui, sans-serif; font-weight: 700; }
+
+  /* Header */
+  header { display: grid; gap: 4px; padding-block: 12px 0; }
+  .topbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+  .brand { font-size: 22px; margin: 0; }
+  .tools { display: flex; gap: 8px; }
+  .tool {
+    font: inherit; font-size: 14px; font-weight: 700;
+    color: var(--muted); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 6px 12px; cursor: pointer;
+  }
+  .tool:hover { color: var(--ink); border-color: var(--muted); }
+  .tool.warn { color: var(--accent); border-color: var(--accent); }
+  .score { text-align: center; display: grid; gap: 2px; }
+  #pops { font-size: clamp(40px, 10vw, 64px); line-height: 1; font-variant-numeric: tabular-nums; }
+  .rates { font-size: 16px; color: var(--muted); display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; }
+  .rates b { color: var(--ink); font-weight: 800; font-variant-numeric: tabular-nums; }
+
+  /* Stage */
+  .stage { position: relative; display: grid; place-items: center; min-height: 0; }
+  #balloon {
+    background: none; border: 0; padding: 0; cursor: inherit;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none;
+    animation: bob 3.2s ease-in-out infinite;
+    border-radius: 40%;
+  }
+  #balloon:focus-visible { outline: 3px solid var(--ink); outline-offset: 6px; }
+  #balloon svg { display: block; height: 300px; width: auto; overflow: visible; }
+  #balloon .squish { transform-box: fill-box; transform-origin: 50% 100%; }
+  #balloon.hit .squish { animation: squish 150ms ease-out; }
+  #balloon.deflating .squish { animation: deflate 0.8s ease-in forwards; }
+  #balloon.inflating .squish { animation: inflate 0.4s cubic-bezier(0.3, 1.5, 0.5, 1); }
+  @keyframes deflate {
+    20% { transform: scale(1.05, 0.95) rotate(-5deg); } 40% { transform: scale(0.8) rotate(7deg); }
+    60% { transform: scale(0.6) rotate(-9deg); } 80% { transform: scale(0.4) rotate(6deg); } 100% { transform: scale(0.25); }
+  }
+  @keyframes inflate { from { transform: scale(0.25); } to { transform: scale(1); } }
+  @keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -8px; } }
+  @keyframes squish { 0% { transform: scale(1.07, 0.9); } 60% { transform: scale(0.97, 1.03); } 100% { transform: scale(1); } }
+  .prop { transform-box: fill-box; transform-origin: center; animation: spin 0.5s linear infinite; }
+  .halo { animation: hover 2s ease-in-out infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes hover { 50% { transform: translateY(-5px); } }
+
+  /* Minion strip */
+  .crew { display: flex; flex-wrap: nowrap; overflow-x: auto; justify-content: safe center; white-space: nowrap; gap: 6px; min-height: 30px; padding-block: 6px; font-size: 15px; font-weight: 700; }
+  .chip { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-variant-numeric: tabular-nums; }
+  .crew .empty { color: var(--muted); font-size: 14px; font-weight: 600; align-self: center; }
+
+  /* Shop bar */
+  .shop {
+    margin-inline: -16px;
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+    padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    display: grid; gap: 10px;
+  }
+  .tabs { display: flex; gap: 6px; overflow-x: auto; }
+  .tab {
+    position: relative; font: inherit; font-size: 15px; font-weight: 700;
+    background: transparent; color: var(--muted); border: 0; border-radius: 8px; padding: 7px 12px; cursor: pointer; white-space: nowrap;
+  }
+  .tab[aria-selected="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 0 var(--line); }
+  .tab.dot::after { content: ""; position: absolute; top: 5px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; }
+  .card {
+    flex: 0 0 172px; scroll-snap-align: start;
+    display: grid; grid-template-rows: 56px auto 1fr auto; gap: 4px; text-align: left;
+    font: inherit; color: var(--ink); background: var(--card);
+    border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; cursor: pointer;
+    transition: transform 80ms, border-color 120ms;
+  }
+  .card:hover { transform: translateY(-2px); }
+  .card:active { transform: translateY(0) scale(0.98); }
+  .card:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .card .art { display: flex; align-items: center; font-size: 30px; line-height: 1; }
+  .card .art img, .card .art svg { height: 40px; width: auto; }
+  .card .art img.monkey { height: 56px; }
+  .card .name { font-weight: 800; font-size: 15px; line-height: 1.2; }
+  .card .desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
+  .card .foot { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .card .cost { font-weight: 800; }
+  .card .own { color: var(--muted); }
+  .card.can { border-color: var(--accent); box-shadow: inset 0 -3px 0 var(--accent); }
+  .card:not(.can):not(.owned) .cost { color: var(--muted); }
+  .card.owned .cost { color: var(--good); }
+  .card.locked { opacity: 0.45; cursor: not-allowed; }
+  .card.locked:hover { transform: none; }
+  .swatch { width: 34px; height: 40px; border-radius: 50% 50% 46% 46% / 55% 55% 45% 45%; }
+
+  /* Settings menu */
+  .modal { position: fixed; inset: 0; z-index: 15; display: grid; place-items: center; padding-inline: 16px; background: rgba(10, 12, 20, 0.5); }
+  .sheet {
+    width: min(460px, 100%); max-height: 86vh; overflow: auto; background: var(--card); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px 20px; box-shadow: 0 20px 60px var(--shadow);
+    display: grid; gap: 16px;
+  }
+  .sheet-head { display: flex; justify-content: space-between; align-items: center; }
+  .sheet h2 { margin: 0; font-size: 26px; }
+  .sheet h3 { margin: 0 0 8px; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .sheet section { display: grid; gap: 10px; }
+  .icon-btn { font: inherit; font-size: 22px; line-height: 1; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+  .opt { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; font-weight: 700; }
+  .seg { display: inline-flex; background: var(--panel); border-radius: 999px; padding: 3px; gap: 2px; }
+  .seg button { font: inherit; font-size: 14px; font-weight: 700; border: 0; background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px var(--shadow); }
+  .seg button:focus-visible, .icon-btn:focus-visible, .tool:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .note { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.45; }
+  .np { display: flex; align-items: center; gap: 10px; }
+
+  .modal[hidden], #ascent[hidden], #toast[hidden] { display: none; }
+
+  /* Backgrounds */
+  #bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+  .has-bg .brand, .has-bg .score { background: var(--veil); border-radius: 14px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .has-bg .brand { padding: 4px 12px; }
+  .has-bg .score { justify-self: center; padding: 6px 18px; }
+  .has-bg .tool { background: var(--card); }
+  .has-bg .float.mini { background: var(--veil); padding: 2px 8px; border-radius: 8px; }
+  .bgs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .bgs button { font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); background: var(--panel); border: 2px solid transparent; border-radius: 12px; padding: 6px; cursor: pointer; display: grid; gap: 4px; }
+  .bgs button[aria-pressed="true"] { border-color: var(--accent); }
+  .bgsw { height: 42px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); }
+
+  /* Statistics */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 0; }
+  .stats div { background: var(--panel); border-radius: 10px; padding: 8px 10px; }
+  .stats dt { font-size: 12px; font-weight: 700; color: var(--muted); }
+  .stats dd { margin: 2px 0 0; font-family: "Fredoka", system-ui, sans-serif; font-weight: 700; font-size: 20px; font-variant-numeric: tabular-nums; }
+
+  /* Monkey Union side panel */
+  .side-tab {
+    position: fixed; right: 0; top: 50%; translate: 0 -50%; z-index: 11; writing-mode: vertical-rl;
+    font: inherit; font-weight: 800; font-size: 14px; letter-spacing: 0.04em;
+    background: var(--ink); color: var(--bg); border: 0; border-radius: 12px 0 0 12px; padding: 16px 9px; cursor: pointer;
+    box-shadow: -4px 0 16px var(--shadow);
+  }
+  .side-tab:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .side-tab .badge { writing-mode: horizontal-tb; display: inline-block; margin-top: 8px; min-width: 20px; padding: 1px 5px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 12px; text-align: center; }
+  .side {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 12; width: min(410px, 94vw);
+    background: var(--panel); border-left: 1px solid var(--line); box-shadow: -12px 0 40px var(--shadow);
+    display: flex; flex-direction: column; transform: translateX(105%); transition: transform 0.3s ease;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .side.open { transform: none; }
+  .side-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .side-head h2 { margin: 0; font-size: 22px; flex: 1; }
+  .pill { font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .side-scroll { overflow-y: auto; padding: 14px 16px calc(24px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 22px; }
+  .side h3 { margin: 0 0 8px; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .feed li { display: grid; grid-template-columns: 40px 1fr; gap: 10px; align-items: start; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .feed img { width: 40px; height: 48px; object-fit: contain; }
+  .feed p { margin: 4px 0 2px; font-size: 14px; line-height: 1.4; }
+  .feed time { font-size: 12px; color: var(--muted); }
+  .feed li.empty { display: block; color: var(--muted); font-size: 14px; }
+  .tag { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; color: #fff; }
+  .tag.complaint { background: #d6453d; } .tag.union { background: #6b47c9; } .tag.event { background: #c98a12; }
+  .masthead { text-align: center; font-family: "Playfair Display", Georgia, serif; font-weight: 900; font-size: 30px; line-height: 1; padding-block: 8px 4px; border-top: 3px double var(--ink); border-bottom: 1px solid var(--ink); }
+  .tagline { text-align: center; font-family: "Libre Baskerville", Georgia, serif; font-style: italic; font-size: 12px; color: var(--muted); margin: 6px 0 14px; }
+  .clips { display: grid; gap: 18px; }
+  .clip-wrap { filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.28)); }
+  .clip {
+    rotate: var(--rot); background: linear-gradient(135deg, #f5eedb, #ebe0c3); color: #2a2418;
+    font-family: "Libre Baskerville", Georgia, serif; font-size: 13px; line-height: 1.5; padding: 16px 16px 14px;
+    clip-path: var(--edge);
+  }
+  .clip .dateline { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid #2a2418; padding-bottom: 4px; display: flex; justify-content: space-between; }
+  .clip h4 { font-family: "Playfair Display", Georgia, serif; font-weight: 900; font-size: 21px; line-height: 1.05; text-transform: uppercase; margin: 8px 0 8px; text-wrap: balance; }
+  .clip figure { float: right; width: 40%; margin: 2px 0 6px 12px; }
+  .clip figure img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; background: #ddd2b4; border: 1px solid #2a2418; padding: 4px; filter: grayscale(1) contrast(1.15) sepia(0.3); }
+  .clip figcaption { font-style: italic; font-size: 10.5px; line-height: 1.3; margin-top: 4px; }
+  .clip p { margin: 0; }
+  .clip p::first-letter { font-family: "Playfair Display", Georgia, serif; font-weight: 900; font-size: 2.6em; float: left; line-height: 0.85; margin: 3px 5px 0 0; }
+  .clip::after { content: ""; display: block; clear: both; }
+  @media (prefers-reduced-motion: reduce) { .side { transition: none; } }
+
+  /* Photorealistic mode */
+  body:not(.real) .realonly { display: none; }
+  body.real .toononly { display: none; }
+  body.real #balloon svg { filter: drop-shadow(0 22px 22px rgba(0, 0, 0, 0.28)); }
+  body.real .stage { background: radial-gradient(ellipse 60% 55% at 50% 48%, var(--spot), transparent 72%); }
+
+  /* 3D monkeys */
+  canvas#m3d { z-index: 4; }
+  .card .art img.nphoto { width: 96px; height: auto; max-height: 20px; transform: rotate(-18deg); margin-top: 8px; }
+
+  /* Union choices */
+  .decision {
+    position: fixed; z-index: 9; left: 16px; top: calc(env(safe-area-inset-top, 0px) + 150px); width: min(340px, calc(100% - 32px));
+    background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px;
+    box-shadow: 0 14px 40px var(--shadow); display: grid; gap: 8px; animation: pop-in 0.3s ease;
+  }
+  @keyframes pop-in { from { transform: translateY(-8px); opacity: 0; } }
+  .dec-head { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .dec-q { margin: 0; font-weight: 800; font-size: 15px; line-height: 1.35; }
+  .dec-opts { display: grid; gap: 6px; }
+  .dec-opt { text-align: left; font: inherit; color: inherit; background: var(--panel); border: 2px solid transparent; border-radius: 10px; padding: 8px 10px; cursor: pointer; display: grid; gap: 2px; }
+  .dec-opt:hover { border-color: var(--line); }
+  .dec-opt:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .dec-opt b { font-size: 14px; }
+  .dec-opt span { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+  .dec-opt .fx { color: var(--ink); font-weight: 700; }
+  .fx .up { color: var(--good); } .fx .down { color: var(--accent); }
+  .dec-opt[disabled] { opacity: 0.5; cursor: not-allowed; }
+  .dec-bar { height: 4px; background: var(--panel); border-radius: 2px; overflow: hidden; }
+  .dec-bar i { display: block; height: 100%; background: var(--accent); width: 100%; }
+  #boostChip.up b { color: var(--good); } #boostChip.down b { color: var(--accent); }
+  .rel { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--line); font-size: 13px; font-weight: 700; color: var(--muted); }
+  .meter { height: 8px; background: var(--card); border-radius: 4px; overflow: hidden; border: 1px solid var(--line); }
+  .meter i { display: block; height: 100%; width: 50%; background: #e0a82a; transition: width 0.4s, background 0.4s; }
+  .rel b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* News blimps */
+  #blimps { position: fixed; left: 0; right: 0; top: calc(env(safe-area-inset-top, 0px) + 58px); height: 76px; z-index: 8; pointer-events: none; overflow: hidden; }
+  .blimp { position: absolute; top: 4px; left: 100%; display: flex; align-items: center; pointer-events: auto; cursor: pointer; animation: fly 20s linear forwards; background: none; border: 0; padding: 0; font: inherit; color: inherit; }
+  .blimp:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .blimp svg { width: 150px; height: 64px; flex: none; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.25)); }
+  .blimp .rope { width: 26px; height: 2px; background: #6b7280; flex: none; }
+  .blimp .banner { background: #fffbe8; color: #2a2418; border: 2px solid #c8202a; border-radius: 4px; padding: 6px 14px; font-family: "Playfair Display", Georgia, serif; font-weight: 900; font-size: 15px; letter-spacing: 0.03em; text-transform: uppercase; white-space: nowrap; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
+  @keyframes fly { to { transform: translateX(calc(-100vw - 100%)); } }
+  .credits { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.5; color: var(--muted); display: grid; gap: 2px; }
+  .credits a { color: var(--ink); }
+  details summary { cursor: pointer; font-weight: 700; }
+  @media (prefers-reduced-motion: reduce) { .blimp { animation: none; left: 50%; translate: -50% 0; } .decision { animation: none; } }
+
+  /* FX */
+  canvas { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  canvas#back { z-index: 0; }
+  .chip img { height: 28px; width: auto; vertical-align: -9px; margin-right: 4px; }
+
+  /* Ascension cutscene: one fixed look, independent of theme */
+  #ascent { position: fixed; inset: 0; z-index: 20; overflow: hidden; display: grid; place-items: center; padding-inline: 16px; background: #0b1030; animation: fadeIn 0.8s ease both; }
+  @keyframes fadeIn { from { opacity: 0; } }
+  #ascent .sky { position: absolute; inset: 0; background: linear-gradient(to top, #0b1030 0%, #2a2f7a 35%, #c77ab0 55%, #ffc27a 75%, #fff6d8 100%); background-size: 100% 300%; background-position: 0 100%; transition: background-position 7s ease-in-out; }
+  #ascent.go .sky { background-position: 0 0; }
+  #ascent .rays { position: absolute; left: 50%; top: 35%; width: 240vmax; height: 240vmax; translate: -50% -50%; opacity: 0; transition: opacity 3s 2s;
+    background: repeating-conic-gradient(rgba(255, 244, 200, 0.35) 0deg 5deg, transparent 5deg 15deg);
+    -webkit-mask: radial-gradient(circle, #000 0, transparent 45%); mask: radial-gradient(circle, #000 0, transparent 45%);
+    animation: spin 60s linear infinite; }
+  #ascent.go .rays { opacity: 1; }
+  #ascent .cloud { position: absolute; top: 0; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 70%); animation: fall linear infinite; }
+  @keyframes fall { from { transform: translateY(-50vh); } to { transform: translateY(150vh); } }
+  #ascent .ascender { position: absolute; left: 50%; top: 50%; width: min(38vw, 190px); translate: -50% -50%; transform: translateY(80vh); }
+  #ascent .ascender svg { width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 0 24px rgba(255, 230, 150, 0.7)); }
+  #ascent.go .ascender { animation: riseIn 5.5s cubic-bezier(0.3, 0.1, 0.3, 1) forwards, sway 3s ease-in-out infinite; }
+  #ascent.leave .ascender { animation: riseOut 1.6s ease-in forwards, sway 3s ease-in-out infinite; }
+  @keyframes riseIn { from { transform: translateY(80vh); } to { transform: translateY(-4vh); } }
+  @keyframes riseOut { from { transform: translateY(-4vh) scale(1); } to { transform: translateY(-120vh) scale(0.5); } }
+  @keyframes sway { 0%, 100% { rotate: -4deg; } 50% { rotate: 4deg; } }
+  #ascent .flash { position: absolute; inset: 0; background: #fffdf2; opacity: 0; pointer-events: none; }
+  #ascent.flashing .flash { animation: flash 1.6s ease-out; }
+  @keyframes flash { 15% { opacity: 1; } 100% { opacity: 0; } }
+  #ascent .ascent-text { position: relative; z-index: 2; display: grid; gap: 10px; justify-items: center; text-align: center; color: #5a3500;
+    opacity: 0; translate: 0 16px; transition: opacity 1s, translate 1s; pointer-events: none; }
+  #ascent.reveal .ascent-text { opacity: 1; translate: 0 0; pointer-events: auto; }
+  #ascent .eyebrow { margin: 0; font-weight: 800; font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: #a8660a; }
+  #ascent h2 { margin: 0; font-size: clamp(48px, 13vw, 88px); line-height: 1; color: #7a4a00; text-shadow: 0 0 30px #fff, 0 0 60px #ffe7a0; text-wrap: balance; }
+  #ascent .line { margin: 0; font-size: 18px; font-weight: 700; max-width: 32ch; }
+  #ascent .stats { margin: 0; font-size: 15px; font-weight: 600; color: #8a5a12; font-variant-numeric: tabular-nums; }
+  #ascent .ascent-btn { margin-top: 10px; font: inherit; font-size: 17px; font-weight: 800; color: #5a3500; cursor: pointer;
+    background: linear-gradient(#ffe89a, #f5c518); border: 2px solid #c99400; border-radius: 999px; padding: 12px 26px; box-shadow: 0 6px 20px rgba(200, 140, 0, 0.35); }
+  #ascent .ascent-btn:focus-visible { outline: 3px solid #5a3500; outline-offset: 3px; }
+  .float {
+    position: fixed; z-index: 6; pointer-events: none; translate: -50% -50%;
+    font-family: "Fredoka", "Arial Rounded MT Bold", system-ui, sans-serif; font-weight: 700; font-size: 26px; color: var(--ink);
+    text-shadow: 0 2px 0 var(--bg); animation: rise 0.9s ease-out forwards; white-space: nowrap;
+  }
+  .float.mini { font-family: "Nunito", system-ui, sans-serif; font-weight: 700; font-size: 14px; color: var(--muted); animation-duration: 1.2s; }
+  @keyframes rise { to { translate: -50% -180%; opacity: 0; } }
+  #toast {
+    position: fixed; z-index: 7; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); translate: -50% 0;
+    background: var(--ink); color: var(--bg); border-radius: 10px; padding: 10px 16px; font-size: 15px; font-weight: 600;
+    max-width: calc(100% - 32px); text-align: center; box-shadow: 0 8px 24px var(--shadow);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #balloon, .prop, .halo, #ascent .cloud, #ascent .rays, #ascent.go .ascender, #ascent.leave .ascender { animation: none; }
+    #ascent .ascender { transform: none; }
+    #balloon.hit .squish, #balloon.deflating .squish, #balloon.inflating .squish { animation: none; }
+    .float { animation-duration: 0.01s; }
+  }
+</style>
+</head>
+<body>
+
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="hg-blue"><stop offset="0" stop-color="#7ab6ff"/><stop offset="0.55" stop-color="#2f7fe8"/><stop offset="1" stop-color="#1a4fa8"/></linearGradient>
+    <linearGradient id="hg-green"><stop offset="0" stop-color="#6fe08c"/><stop offset="0.55" stop-color="#2fb85a"/><stop offset="1" stop-color="#17753a"/></linearGradient>
+    <linearGradient id="hg-red"><stop offset="0" stop-color="#ff8a80"/><stop offset="0.55" stop-color="#e8323c"/><stop offset="1" stop-color="#9e1420"/></linearGradient>
+    <linearGradient id="hg-black"><stop offset="0" stop-color="#4a5068"/><stop offset="0.5" stop-color="#1c1f2b"/><stop offset="1" stop-color="#0b0c12"/></linearGradient>
+    <linearGradient id="hg-brown"><stop offset="0" stop-color="#d99a5a"/><stop offset="0.55" stop-color="#a86d36"/><stop offset="1" stop-color="#6a401c"/></linearGradient>
+    <linearGradient id="hg-purple"><stop offset="0" stop-color="#7b66d9"/><stop offset="0.55" stop-color="#3b2a8f"/><stop offset="1" stop-color="#22155e"/></linearGradient>
+    <linearGradient id="hg-gold"><stop offset="0" stop-color="#fff4b8"/><stop offset="0.5" stop-color="#f5c518"/><stop offset="1" stop-color="#b98a00"/></linearGradient>
+    <radialGradient id="hg-pink" cx="0.35" cy="0.35"><stop offset="0" stop-color="#ffc2e4"/><stop offset="0.6" stop-color="#ec4fa8"/><stop offset="1" stop-color="#a01c6a"/></radialGradient>
+    <radialGradient id="hg-wool" cx="0.35" cy="0.35"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfe3d5"/></radialGradient>
+    <linearGradient id="hg-maroon"><stop offset="0" stop-color="#c24a70"/><stop offset="0.55" stop-color="#7a1a3a"/><stop offset="1" stop-color="#4a0d22"/></linearGradient>
+    <linearGradient id="hg-straw"><stop offset="0" stop-color="#fff0c4"/><stop offset="0.55" stop-color="#e3c27a"/><stop offset="1" stop-color="#a88542"/></linearGradient>
+    <linearGradient id="hg-steel"><stop offset="0" stop-color="#eef1f6"/><stop offset="0.5" stop-color="#9aa3b5"/><stop offset="1" stop-color="#5a6275"/></linearGradient>
+    <pattern id="hg-knit" width="7" height="6" patternUnits="userSpaceOnUse"><path d="M0.5 0.5 L3.5 5 L6.5 0.5" fill="none" stroke="rgba(0,0,0,0.16)" stroke-width="1.1"/></pattern>
+  </defs>
+</svg>
+<div id="bg"></div>
+<canvas id="back"></canvas>
+<canvas id="fx"></canvas>
+<div id="ascent" hidden>
+  <div class="sky"></div>
+  <div class="rays"></div>
+  <div id="clouds"></div>
+  <div class="ascender" id="ascender"></div>
+  <div class="ascent-text">
+    <p class="eyebrow">Halo acquired</p>
+    <h2 class="display">Ascension</h2>
+    <p class="line">Your balloon has floated beyond the reach of every needle.</p>
+    <p class="stats" id="ascentStats"></p>
+    <button class="ascent-btn" id="ascentClose" type="button">Return to Earth</button>
+  </div>
+  <div class="flash"></div>
+</div>
+<div id="toast" hidden></div>
+<div id="blimps"></div>
+<div class="decision" id="decision" hidden role="alertdialog" aria-labelledby="decQ">
+  <div class="dec-head"><span class="tag union">Union request</span><span id="decLeft">45s</span></div>
+  <p class="dec-q" id="decQ"></p>
+  <div class="dec-opts" id="decOpts"></div>
+  <div class="dec-bar"><i id="decBar"></i></div>
+</div>
+<div class="modal" id="settings" hidden role="dialog" aria-modal="true" aria-labelledby="setTitle">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2 id="setTitle" class="display">Settings</h2>
+      <button class="icon-btn" id="setClose" type="button" aria-label="Close settings">×</button>
+    </div>
+    <section>
+      <h3>Look</h3>
+      <div class="opt"><span>Monkeys</span>
+        <div class="seg" data-opt="style"><button type="button" data-val="body">Full body</button><button type="button" data-val="head">Heads only</button></div></div>
+      <div class="opt"><span>Needles</span>
+        <div class="seg" data-opt="needles"><button type="button" data-val="detailed">Detailed</button><button type="button" data-val="basic">Basic</button></div></div>
+      <div class="opt"><span>Photorealistic mode</span>
+        <div class="seg" data-opt="real"><button type="button" data-val="off">Off</button><button type="button" data-val="on">On</button></div></div>
+      <p class="note">Photorealistic mode swaps in real photographs of balloons, monkeys, hats and needles (credits at the bottom), and switches every sound effect to a recorded-style version with room echo.</p>
+    </section>
+    <section>
+      <h3>Background</h3>
+      <div class="bgs" data-opt="bg">
+        <button type="button" data-val="plain"><span class="bgsw" data-sw="plain"></span>Plain</button>
+        <button type="button" data-val="sky"><span class="bgsw" data-sw="sky"></span>Sky</button>
+        <button type="button" data-val="beach"><span class="bgsw" data-sw="beach"></span>Beach</button>
+        <button type="button" data-val="jungle"><span class="bgsw" data-sw="jungle"></span>Jungle</button>
+        <button type="button" data-val="circus"><span class="bgsw" data-sw="circus"></span>Circus</button>
+        <button type="button" data-val="space"><span class="bgsw" data-sw="space"></span>Space</button>
+      </div>
+    </section>
+    <section>
+      <h3>Sound</h3>
+      <div class="opt"><span>Music</span>
+        <div class="seg" data-opt="music"><button type="button" data-val="on">On</button><button type="button" data-val="off">Off</button></div></div>
+      <div class="opt"><span>Effects</span>
+        <div class="seg" data-opt="sound"><button type="button" data-val="on">On</button><button type="button" data-val="off">Off</button></div></div>
+      <div class="opt"><span>Now playing</span>
+        <div class="np"><b id="trackName">Calypso Pop</b><button class="tool" id="nextTrack" type="button">Next track</button></div></div>
+    </section>
+    <section>
+      <h3>Progress</h3>
+      <div><button class="tool" id="resetBtn" type="button">Reset game</button></div>
+    </section>
+    <section>
+      <h3>Statistics</h3>
+      <dl class="stats">
+        <div><dt>Balloons popped</dt><dd id="stPopped">0</dd></div>
+        <div><dt>Monkeys employed</dt><dd id="stMonkeys">0</dd></div>
+        <div><dt>Clicks</dt><dd id="stClicks">0</dd></div>
+        <div><dt>Pops per second</dt><dd id="stPps">0</dd></div>
+        <div><dt>Days on the job</dt><dd id="stDays">1</dd></div>
+        <div><dt>Union status</dt><dd id="stUnion">None</dd></div>
+        <div><dt>Union standing</dt><dd id="stRel">50</dd></div>
+      </dl>
+    </section>
+    <section>
+      <details>
+        <summary>Photo credits</summary>
+        <p class="note">Photorealistic mode uses real photographs from Wikimedia Commons, cut out from their backgrounds (and recoloured where noted).</p>
+        <ul class="credits" id="credits"></ul>
+      </details>
+    </section>
+  </div>
+</div>
+<button class="side-tab" id="sideTab" type="button" aria-expanded="false" aria-controls="side">Monkey Union<span class="badge" id="sideBadge" hidden>0</span></button>
+<aside class="side" id="side" aria-label="Monkey Union and news" inert>
+  <div class="side-head">
+    <h2 class="display">Monkey Union</h2>
+    <span class="pill" id="unionPill">Not organised</span>
+    <button class="icon-btn" id="sideClose" type="button" aria-label="Close Monkey Union panel">×</button>
+  </div>
+  <div class="rel"><span>Union standing</span><div class="meter"><i id="relBar"></i></div><b id="relName">Neutral</b></div>
+  <div class="side-scroll">
+    <section>
+      <h3>Worker updates</h3>
+      <ul class="feed" id="feedList"></ul>
+    </section>
+    <section>
+      <div class="masthead">The Daily Peel</div>
+      <div class="tagline" id="tagline">All the news that's fit to pop</div>
+      <div class="clips" id="newsList"></div>
+    </section>
+  </div>
+</aside>
+<main>
+  <header>
+    <div class="topbar">
+      <h1 class="brand display">Pop Clicker</h1>
+      <div class="tools">
+        <button class="tool" id="replayBtn" type="button" hidden>Ascend again</button>
+        <button class="tool" id="settingsBtn" type="button" aria-haspopup="dialog">Settings</button>
+      </div>
+    </div>
+    <div class="score">
+      <div><span id="pops" class="display">0</span></div>
+      <div class="rates">
+        <span><b id="pps">0</b> per second</span>
+        <span><b id="ppc">1</b> per click</span>
+        <span>Colour bonus <b id="mult">×1</b></span>
+        <span id="boostChip" hidden>Workers <b id="boostVal">×1</b></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="stage" id="stage">
+    <button id="balloon" type="button" aria-label="Pop the balloon">
+      <svg viewBox="0 -72 200 342" aria-hidden="true">
+        <defs>
+          <radialGradient id="bfill" cx="38%" cy="32%" r="75%">
+            <stop id="s0" offset="0" stop-color="#ff7a70"/>
+            <stop id="s1" offset="0.5" stop-color="#e8323c"/>
+            <stop id="s2" offset="1" stop-color="#a3141f"/>
+          </radialGradient>
+          <linearGradient id="rainbow" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#ff4d5a"/>
+            <stop offset="0.2" stop-color="#ff9f2e"/>
+            <stop offset="0.4" stop-color="#ffe03a"/>
+            <stop offset="0.6" stop-color="#3ccf6e"/>
+            <stop offset="0.8" stop-color="#3a8cff"/>
+            <stop offset="1" stop-color="#9b4dff"/>
+          </linearGradient>
+          <radialGradient id="rimGrad" cx="0.5" cy="0.5" r="0.5"><stop offset="0.78" stop-color="#fff" stop-opacity="0"/><stop offset="0.93" stop-color="#fff" stop-opacity="0.2"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+          <radialGradient id="shadeGrad" cx="0.32" cy="0.26" r="0.85"><stop offset="0.45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.5"/></radialGradient>
+          <radialGradient id="glowGrad" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff" stop-opacity="0.55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+          <filter id="realHat" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="b"/>
+            <feSpecularLighting in="b" surfaceScale="4" specularConstant="0.8" specularExponent="20" lighting-color="#ffffff" result="spec">
+              <fePointLight x="40" y="-120" z="160"/>
+            </feSpecularLighting>
+            <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
+            <feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="2" seed="7" result="noise"/>
+            <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.4 -0.08" result="grain"/>
+            <feComposite in="grain" in2="SourceAlpha" operator="in" result="grainIn"/>
+            <feDropShadow in="SourceGraphic" dx="0" dy="3" stdDeviation="2.5" flood-opacity="0.35" result="base"/>
+            <feMerge><feMergeNode in="base"/><feMergeNode in="grainIn"/><feMergeNode in="specIn"/></feMerge>
+          </filter>
+          <filter id="hatShadow" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-opacity="0.35"/></filter>
+        </defs>
+        <path class="toononly" d="M100 220 C 94 238, 110 248, 100 268" fill="none" stroke="var(--muted)" stroke-width="2"/>
+        <path class="realonly" d="M100 240 C 94 250, 106 258, 99 264 C 95 268, 102 270, 100 272" fill="none" stroke="var(--muted)" stroke-width="1.1"/>
+        <g class="squish">
+          <path id="knot" class="toononly" d="M91 223 L109 223 L100 211 Z" fill="#a3141f"/>
+          <ellipse id="body" class="toononly" cx="100" cy="120" rx="80" ry="95" fill="url(#bfill)"/>
+          <image id="bphoto" class="realonly" href="" x="14" y="18" width="172" height="222" preserveAspectRatio="xMidYMid meet"/>
+          <ellipse class="toononly" cx="66" cy="74" rx="14" ry="26" fill="#fff" opacity="0.35" transform="rotate(-28 66 74)"/>
+          <g id="hat"></g>
+        </g>
+      </svg>
+    </button>
+  </div>
+
+  <div class="crew" id="crew"></div>
+
+  <section class="shop" aria-label="Shop">
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="needles" type="button">Needles</button>
+      <button class="tab" role="tab" data-tab="minions" type="button">Monkeys</button>
+      <button class="tab" role="tab" data-tab="upgrades" type="button">Upgrades</button>
+      <button class="tab" role="tab" data-tab="colours" type="button">Colours</button>
+      <button class="tab" role="tab" data-tab="hats" type="button">Hats</button>
+      <button class="tab" role="tab" data-tab="mhats" type="button">Monkey Hats</button>
+    </nav>
+    <div class="row" id="row"></div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  // ---------- Data ----------
+  // kind/metal describe the detailed needle; shaft/head/hc/w describe the basic one.
+  const STEEL = ['#f7f9fc', '#b9c0cc', '#5f6675'], GOLD = ['#fff4b8', '#e0b020', '#8a6400'];
+  const NEEDLES = [
+    { name: 'Sewing Pin',      click: 1,     cost: 0,     kind: 'pin', len: 40, r: 3.6, hc: '#e8323c', metal: STEEL,
+      shaft: '#c9ced8', head: 'ball', w: 2 },
+    { name: 'Map Pin',         click: 3,     cost: 60,    kind: 'pin', len: 38, r: 4.6, hc: '#f5c518', metal: STEEL,
+      shaft: '#c9ced8', head: 'ball', w: 2.4 },
+    { name: 'Darning Needle',  click: 8,     cost: 500,   kind: 'needle', thread: '#d62839', metal: STEEL,
+      shaft: '#e3e7ee', head: 'eye', w: 2.6 },
+    { name: 'Hat Pin',         click: 25,    cost: 4e3,   kind: 'pin', len: 54, r: 4.2, hc: '#fff4f8', metal: STEEL,
+      shaft: '#d9dde6', head: 'ball', w: 2.4 },
+    { name: 'Knitting Needle', click: 80,    cost: 3e4,   kind: 'knit', hc: '#ec4fa8', metal: ['#ffd0e8', '#ec4fa8', '#9a1f63'],
+      shaft: '#f7a8d4', head: 'ball', w: 4 },
+    { name: 'Cactus Spine',    click: 300,   cost: 2.5e5, kind: 'spine', metal: ['#fff3c4', '#d8c27a', '#8a7330'],
+      shaft: '#e6d38a', head: 'none', w: 2.6 },
+    { name: 'Porcupine Quill', click: 1200,  cost: 2e6,   kind: 'quill', metal: ['#ffffff', '#ece6d6', '#9a927e'],
+      shaft: '#f2eee4', head: 'band', hc: '#3a2a1a', w: 3.2 },
+    { name: 'Diamond Needle',  click: 5000,  cost: 2e7,   kind: 'gem', hc: '#dff8ff', metal: ['#ffffff', '#a8ecff', '#4aa8c8'],
+      shaft: '#a8ecff', head: 'gem', w: 3 },
+    { name: 'Golden Needle',   click: 25000, cost: 2.5e8, kind: 'needle', thread: '#f5c518', metal: GOLD,
+      shaft: '#f5c518', head: 'eye', w: 3 },
+  ];
+  // Orbiters circle the balloon and jab it with pins; throwers stand back and throw darts.
+  const MINIONS = [
+    { id: 'baby',      name: 'Baby Monkey',   pps: 0.1,  cost: 15,    role: 'orbit', desc: 'Toddles round the balloon with a pin',
+      look: { fur: '#a86d36', face: '#f5d9b5', acc: 'tuft' } },
+    { id: 'spider',    name: 'Spider Monkey', pps: 1,    cost: 100,   role: 'orbit', desc: 'Swings in circles, poking as it goes',
+      look: { fur: '#2e2724', face: '#d9b89a' } },
+    { id: 'snow',      name: 'Snow Monkey',   pps: 8,    cost: 1100,  role: 'orbit', desc: 'Red-faced and relentless',
+      look: { fur: '#c9c4bc', face: '#e87a7a' } },
+    { id: 'golden',    name: 'Golden Monkey', pps: 47,   cost: 12e3,  role: 'orbit', desc: 'Blue face, golden fur, very sharp pin',
+      look: { fur: '#e89a2c', face: '#9fc4e8' } },
+    { id: 'dart',      name: 'Dart Monkey',   pps: 260,  cost: 13e4,  role: 'throw', every: 1.4, darts: 1, desc: 'Throws darts from a safe distance',
+      look: { fur: '#8a5a2b', face: '#f0cfa0', acc: 'headband' } },
+    { id: 'ninja',     name: 'Ninja Monkey',  pps: 1400, cost: 1.4e6, role: 'throw', every: 0.7, darts: 1, desc: 'Silent, quick darts',
+      look: { fur: '#5a3a22', face: '#f0cfa0', acc: 'ninja', suit: '#2b2b35' } },
+    { id: 'orangutan', name: 'Orangutan Ace', pps: 7800, cost: 2e7,   role: 'throw', every: 1.3, darts: 3, desc: 'Hurls three darts at once',
+      look: { fur: '#c8561c', face: '#e3a878', acc: 'cheeks' } },
+    { id: 'space',     name: 'Space Monkey',  pps: 44e3, cost: 3.3e8, role: 'throw', every: 0.45, darts: 1, laser: true, desc: 'Fires laser darts from orbit',
+      look: { fur: '#8a5a2b', face: '#f0cfa0', acc: 'helmet', suit: '#e6eaf2' } },
+  ];
+  const OLD_IDS = { sparrow: 'baby', kid: 'spider', hog: 'snow', cactus: 'golden', factory: 'ninja', rocket: 'orangutan', ufo: 'space' };
+  // One pop sound per balloon colour, in the same order as COLOURS.
+  const POP_SOUNDS = [
+    { name: 'Classic pop',    bp: 1600, q: 0.6, nd: 0.09, ng: 1.6, f0: 220, f1: 45,  td: 0.14, tg: 1.4 },
+    { name: 'Snappy crack',   bp: 2600, q: 0.9, nd: 0.05, ng: 1.8, f0: 320, f1: 90,  td: 0.07, tg: 1.0 },
+    { name: 'Squeaky pip',    bp: 3200, q: 1.2, nd: 0.04, ng: 1.1, f0: 600, f1: 180, td: 0.06, tg: 0.7, extra: 'squeak' },
+    { name: 'Bubbly bloop',   bp: 900,  q: 1.0, nd: 0.06, ng: 1.0, f0: 300, f1: 80,  td: 0.16, tg: 1.2, extra: 'bloop' },
+    { name: 'Deep boom',      bp: 700,  q: 0.5, nd: 0.18, ng: 1.6, f0: 140, f1: 30,  td: 0.35, tg: 1.8 },
+    { name: 'Magic sparkle',  bp: 2200, q: 0.7, nd: 0.07, ng: 1.3, f0: 260, f1: 60,  td: 0.12, tg: 1.1, extra: 'sparkle' },
+    { name: 'Bubblegum snap', bp: 1800, q: 2.0, nd: 0.05, ng: 1.4, f0: 400, f1: 150, td: 0.08, tg: 1.1, extra: 'snap' },
+    { name: 'Coin clink',     bp: 2000, q: 0.8, nd: 0.06, ng: 1.3, f0: 240, f1: 60,  td: 0.12, tg: 1.2, extra: 'coin' },
+    { name: 'Rainbow chord',  bp: 1600, q: 0.6, nd: 0.09, ng: 1.6, f0: 220, f1: 45,  td: 0.14, tg: 1.4, extra: 'arp' },
+  ];
+  const COLOURS = [
+    { name: 'Red',     mult: 1,   cost: 0,      c: ['#ff7a70', '#e8323c', '#a3141f'] },
+    { name: 'Orange',  mult: 1.5, cost: 500,    c: ['#ffb36b', '#f57c1f', '#b04a06'] },
+    { name: 'Yellow',  mult: 2,   cost: 5e3,    c: ['#fff08a', '#f5c518', '#a88100'] },
+    { name: 'Green',   mult: 3,   cost: 6e4,    c: ['#8ef0a0', '#2fb85a', '#16702f'] },
+    { name: 'Blue',    mult: 5,   cost: 7e5,    c: ['#8cc8ff', '#2f7fe8', '#1848a0'] },
+    { name: 'Purple',  mult: 8,   cost: 8e6,    c: ['#d0a0ff', '#8b3fe0', '#52178f'] },
+    { name: 'Pink',    mult: 13,  cost: 1e8,    c: ['#ffb0dc', '#ec4fa8', '#a01c6a'] },
+    { name: 'Gold',    mult: 21,  cost: 1.5e9,  c: ['#fff3b0', '#e0a82a', '#8a5a0a'] },
+    { name: 'Rainbow', mult: 50,  cost: 2.5e10, c: ['#ffe03a', '#3ccf6e', '#9b4dff'], rainbow: true },
+  ];
+
+  const star = (x, y, r, fill) => {
+    let p = [];
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r;
+      p.push((x + Math.cos(a) * rr).toFixed(1) + ',' + (y + Math.sin(a) * rr).toFixed(1));
+    }
+    return `<polygon points="${p.join(' ')}" fill="${fill}"/>`;
+  };
+  // Balloon hats sit on the balloon's crown (top at y=25, about 86 wide at y=40) with a contact shadow underneath.
+  const SH = `<ellipse cx="100" cy="46" rx="40" ry="7" fill="#000" opacity="0.16"/>`;
+  const OL = `stroke="rgba(0,0,0,0.3)" stroke-width="1.5" stroke-linejoin="round"`;
+  const HATS = [
+    { id: 'party', name: 'Party Hat', cost: 200, desc: 'Every pop is a celebration',
+      svg: `${SH}<g transform="rotate(-6 100 44)">
+        <path d="M68 42 Q100 53 132 42 L104 -52 Z" fill="url(#hg-blue)" ${OL}/>
+        <circle cx="100" cy="-20" r="4" fill="#ffd43b"/><circle cx="112" cy="4" r="5" fill="#ffd43b"/><circle cx="92" cy="14" r="5" fill="#ff7ac6"/>
+        <circle cx="104" cy="-36" r="3" fill="#ff7ac6"/><circle cx="118" cy="27" r="4.5" fill="#ffd43b"/><circle cx="83" cy="31" r="4" fill="#ff7ac6"/><circle cx="102" cy="32" r="3.5" fill="#fff"/>
+        <path d="M101 -44 L84 36" stroke="#fff" stroke-opacity="0.35" stroke-width="5" stroke-linecap="round"/>
+        <path d="M66 42 Q100 55 134 42" fill="none" stroke="#ffd43b" stroke-width="8" stroke-linecap="round" stroke-dasharray="0.1 7"/>
+        ${[0, 45, 90, 135, 180, 225, 270, 315].map(a => `<circle cx="${(104 + Math.cos(a * Math.PI / 180) * 9).toFixed(1)}" cy="${(-55 + Math.sin(a * Math.PI / 180) * 9).toFixed(1)}" r="5" fill="#ec4fa8"/>`).join('')}
+        <circle cx="104" cy="-55" r="8" fill="url(#hg-pink)"/></g>` },
+    { id: 'beanie', name: 'Beanie', cost: 1500, desc: 'Keeps the helium warm',
+      svg: `${SH}<path d="M54 46 C52 -10 148 -10 146 46 Z" fill="url(#hg-green)" ${OL}/>
+        <path d="M54 46 C52 -10 148 -10 146 46 Z" fill="url(#hg-knit)"/>
+        <path d="M50 33 Q100 48 150 33 L152 50 Q100 65 48 50 Z" fill="#1f8f45" ${OL}/>
+        <path d="M58 37 L58 52 M66 39 L66 55 M74 41 L74 57 M82 42 L82 58 M90 43 L90 59 M98 43 L98 59 M106 43 L106 59 M114 43 L114 58 M122 42 L122 57 M130 40 L130 55 M138 38 L138 53 M146 35 L146 51" stroke="rgba(0,0,0,0.2)" stroke-width="2.5"/>
+        <circle cx="100" cy="-4" r="15" fill="url(#hg-wool)" ${OL}/><circle cx="95" cy="-9" r="4" fill="#fff" opacity="0.7"/>` },
+    { id: 'propeller', name: 'Propeller Cap', cost: 9000, desc: 'Spins when it feels like it',
+      svg: `${SH}<path d="M62 44 C60 -2 140 -2 138 44 Q100 54 62 44 Z" fill="url(#hg-red)" ${OL}/>
+        <path d="M100 9 C89 10 83 26 83 48 Q91 50 100 50 Z" fill="#ffd43b" opacity="0.95"/>
+        <path d="M100 9 C111 10 117 26 117 48 Q109 50 100 50 Z" fill="#2f7fe8" opacity="0.95"/>
+        <path d="M124 44 Q158 40 168 52 Q148 60 120 51 Z" fill="#9e1420" ${OL}/>
+        <rect x="98" y="-14" width="4" height="23" rx="2" fill="#4a4f60"/><circle cx="100" cy="9" r="4.5" fill="#9e1420"/>
+        <g transform="translate(100 -14)"><g class="prop">
+          <ellipse cx="-18" cy="0" rx="18" ry="5" fill="#2f7fe8" ${OL}/><ellipse cx="18" cy="0" rx="18" ry="5" fill="#2fb85a" ${OL}/>
+          <circle r="4" fill="#4a4f60"/></g></g>` },
+    { id: 'beret', name: 'Beret', cost: 25000, desc: 'Very artistic. Very French.',
+      svg: `${SH}<path d="M50 36 C40 4 98 -10 150 10 C162 16 158 34 142 42 Q100 52 62 44 Q50 42 50 36 Z" fill="url(#hg-maroon)" ${OL}/>
+        <path d="M58 40 Q100 50 144 39" stroke="rgba(0,0,0,0.3)" stroke-width="4" fill="none"/>
+        <path d="M80 8 Q100 -2 124 4" stroke="#fff" stroke-opacity="0.18" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M104 -2 q2 -8 7 -10" stroke="#4a0d22" stroke-width="4" stroke-linecap="round" fill="none"/>` },
+    { id: 'cowboy', name: 'Cowboy Hat', cost: 5e4, desc: 'Fastest needle in the west',
+      svg: `${SH}<path d="M72 40 C66 4 80 -16 100 -4 C120 -16 134 4 128 40 Z" fill="url(#hg-brown)" ${OL}/>
+        <path d="M90 -6 Q100 6 110 -6" fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M71 27 Q100 34 129 27 L128.5 36 Q100 43 71.5 36 Z" fill="#4a2e14"/><circle cx="84" cy="32" r="3" fill="#f5c518"/>
+        <path d="M28 31 Q36 50 100 52 Q164 50 172 31 Q160 40 140 40 Q100 48 60 40 Q40 40 28 31 Z" fill="url(#hg-brown)" ${OL}/>
+        <path d="M40 38 Q100 52 160 38" stroke="#fff" stroke-opacity="0.22" stroke-width="2" fill="none"/>` },
+    { id: 'bowler', name: 'Bowler Hat', cost: 1.2e5, desc: 'For balloons with business to attend',
+      svg: `${SH}<path d="M66 42 C62 -14 138 -14 134 42 Z" fill="url(#hg-black)" ${OL}/>
+        <path d="M66.5 31 Q100 37 133.5 31 L134 41 Q100 47 66 41 Z" fill="#3a3f52"/>
+        <path d="M80 -2 Q88 -8 98 -8" stroke="#fff" stroke-opacity="0.22" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M46 41 Q48 53 100 53 Q152 53 154 41 Q150 35 134 39 Q100 45 66 39 Q50 35 46 41 Z" fill="url(#hg-black)" ${OL}/>` },
+    { id: 'tophat', name: 'Top Hat', cost: 3e5, desc: 'A gentleballoon of means',
+      svg: `${SH}<g transform="rotate(5 100 44)"><path d="M74 -44 L126 -44 L124 38 L76 38 Z" fill="url(#hg-black)" ${OL}/>
+        <ellipse cx="100" cy="-44" rx="26" ry="6" fill="#2d3244" ${OL}/>
+        <path d="M75.3 18 L124.7 18 L124.2 32 L75.8 32 Z" fill="url(#hg-red)"/>
+        <rect x="81" y="-38" width="5" height="52" rx="2.5" fill="#fff" opacity="0.13"/>
+        <path d="M46 38 Q48 52 100 52 Q152 52 154 38 Q148 32 126 35 L74 35 Q52 32 46 38 Z" fill="url(#hg-black)" ${OL}/></g>` },
+    { id: 'fez', name: 'Fez', cost: 7e5, desc: 'Tassel sold separately (it is included)',
+      svg: `${SH}<path d="M72 44 L78 -8 Q100 -12 122 -8 L128 44 Q100 52 72 44 Z" fill="url(#hg-red)" ${OL}/>
+        <ellipse cx="100" cy="-8" rx="22" ry="5" fill="#9e1420" ${OL}/>
+        <path d="M100 -8 Q118 -6 124 14" stroke="#1c1f2b" stroke-width="2.5" fill="none"/>
+        <path d="M121 12 l-3 18 M124 12 l0 19 M127 12 l3 18" stroke="#1c1f2b" stroke-width="2" stroke-linecap="round"/>` },
+    { id: 'sombrero', name: 'Sombrero', cost: 1.5e6, desc: 'Shade for the whole workforce',
+      svg: `${SH}<path d="M76 44 C72 -6 128 -6 124 44 Z" fill="url(#hg-straw)" ${OL}/>
+        <path d="M77 30 Q100 36 123 30 L123.6 38 Q100 44 76.4 38 Z" fill="#2fb85a"/><path d="M78 22 Q100 28 122 22" stroke="#c8202a" stroke-width="3" fill="none"/>
+        <path d="M4 44 Q100 20 196 44 Q100 70 4 44 Z" fill="url(#hg-straw)" ${OL}/>
+        <path d="M4 44 Q100 70 196 44" stroke="#c8202a" stroke-width="3" fill="none"/>
+        <path d="M20 44 Q100 26 180 44" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>` },
+    { id: 'wizard', name: 'Wizard Hat', cost: 2.5e6, desc: 'Pops balloons from a distance',
+      svg: `${SH}<path d="M66 42 Q84 -6 90 -38 Q96 -64 126 -60 Q108 -44 110 -10 Q114 18 134 42 Z" fill="url(#hg-purple)" ${OL}/>
+        ${star(90, 6, 8, '#ffd43b')}${star(102, -22, 5.5, '#ffd43b')}${star(113, 22, 5, '#fff3b0')}${star(98, -44, 4, '#fff3b0')}
+        <path d="M70 30 Q100 37 131 30 L132 38 Q100 45 69 38 Z" fill="#ffd43b"/><rect x="95" y="31" width="10" height="9" rx="1.5" fill="none" stroke="#8a6400" stroke-width="2"/>
+        <ellipse cx="100" cy="44" rx="56" ry="10" fill="#2a1d6b" ${OL}/>
+        <path d="M58 42 Q100 36 142 42" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>` },
+    { id: 'pirate', name: 'Pirate Hat', cost: 6e6, desc: 'Arr. Pop the balloon.',
+      svg: `${SH}<path d="M34 38 Q60 -22 100 -8 Q140 -22 166 38 Q132 22 100 31 Q68 22 34 38 Z" fill="url(#hg-black)" ${OL}/>
+        <path d="M34 38 Q68 22 100 31 Q132 22 166 38" stroke="#f5c518" stroke-width="3" fill="none"/>
+        <circle cx="100" cy="10" r="8" fill="#f2eee4"/><circle cx="97" cy="9" r="1.8" fill="#1c1f2b"/><circle cx="103" cy="9" r="1.8" fill="#1c1f2b"/>
+        <path d="M89 20 L111 28 M111 20 L89 28" stroke="#f2eee4" stroke-width="3" stroke-linecap="round"/>` },
+    { id: 'hardhat', name: 'Hard Hat', cost: 1.2e7, desc: 'Union-approved safety gear',
+      svg: `${SH}<path d="M58 46 C56 -8 144 -8 142 46 Z" fill="url(#hg-gold)" ${OL}/>
+        <path d="M100 2 L100 46" stroke="rgba(0,0,0,0.13)" stroke-width="12"/><path d="M84 6 Q90 0 98 -1" stroke="#fff" stroke-opacity="0.5" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M50 42 Q100 55 150 42 L155 51 Q100 66 45 51 Z" fill="url(#hg-gold)" ${OL}/>` },
+    { id: 'crown', name: 'Crown', cost: 2e7, desc: 'Ruler of the Pop Kingdom',
+      svg: `${SH}<path d="M60 42 L58 0 L78 20 L89 -14 L100 14 L111 -14 L122 20 L142 0 L140 42 Q100 54 60 42 Z" fill="url(#hg-gold)" ${OL}/>
+        <path d="M60 32 Q100 44 140 32 L140 42 Q100 54 60 42 Z" fill="#c99400"/>
+        <circle cx="58" cy="0" r="5" fill="url(#hg-gold)" ${OL}/><circle cx="89" cy="-14" r="5" fill="url(#hg-gold)" ${OL}/>
+        <circle cx="111" cy="-14" r="5" fill="url(#hg-gold)" ${OL}/><circle cx="142" cy="0" r="5" fill="url(#hg-gold)" ${OL}/>
+        <ellipse cx="100" cy="42" rx="6" ry="5" fill="#e8323c" stroke="#7a0f18" stroke-width="1"/><circle cx="98" cy="40.5" r="1.6" fill="#fff" opacity="0.7"/>
+        <circle cx="78" cy="39" r="4" fill="#2f7fe8" stroke="#123e80" stroke-width="1"/><circle cx="122" cy="39" r="4" fill="#2fb85a" stroke="#0f5a28" stroke-width="1"/>` },
+    { id: 'viking', name: 'Viking Helmet', cost: 5e7, desc: 'Horns included. Pillaging optional.',
+      svg: `${SH}<path d="M66 16 Q40 12 34 -26 Q50 -2 74 2 Z" fill="#f2eee4" ${OL}/><path d="M134 16 Q160 12 166 -26 Q150 -2 126 2 Z" fill="#f2eee4" ${OL}/>
+        <path d="M58 48 C56 -10 144 -10 142 48 Z" fill="url(#hg-steel)" ${OL}/>
+        <path d="M56 35 Q100 48 144 35 L145 48 Q100 61 55 48 Z" fill="#6b7488" ${OL}/><path d="M100 -1 L100 38" stroke="#6b7488" stroke-width="7"/>
+        ${[64, 78, 92, 108, 122, 136].map(x => `<circle cx="${x}" cy="${44 + Math.abs(100 - x) * -0.12 + 3}" r="2.2" fill="#dfe3ea"/>`).join('')}` },
+    { id: 'halo', name: 'Halo', cost: 3e8, desc: 'Too pure to pop. Pops anyway.',
+      svg: `<g class="halo"><ellipse cx="100" cy="-12" rx="46" ry="12" fill="none" stroke="#ffe27a" stroke-width="18" opacity="0.22"/>
+        <ellipse cx="100" cy="-12" rx="46" ry="12" fill="none" stroke="url(#hg-gold)" stroke-width="7"/>
+        <ellipse cx="100" cy="-12" rx="46" ry="12" fill="none" stroke="#fffbe0" stroke-width="2" opacity="0.8"/></g>` },
+  ];
+
+  // Monkey hats, drawn in the monkey's own 64-unit head space (head top at y=11).
+  const MHATS = [
+    { id: 'party', name: 'Party Hat', cost: 500, desc: 'Every monkey loves a party',
+      svg: `<g transform="rotate(-12 32 15)"><polygon points="32,-14 21,16 43,16" fill="#2f7fe8" stroke="#1c1f2b" stroke-width="1.2" stroke-linejoin="round"/>
+        <circle cx="30" cy="0" r="2" fill="#ffd43b"/><circle cx="35" cy="7" r="2" fill="#ffd43b"/><circle cx="28" cy="10" r="1.6" fill="#fff"/><circle cx="32" cy="-15" r="3.5" fill="#ec4fa8"/></g>` },
+    { id: 'banana', name: 'Banana', cost: 3000, desc: 'Snack storage, on the head',
+      svg: `<path d="M13 15 Q32 -8 53 9 Q49 13 46 11 Q32 0 17 17 Z" fill="#f5d02a" stroke="#8a6a00" stroke-width="1.2"/>
+        <path d="M53 9 L56 6" stroke="#5a3a10" stroke-width="2.5" stroke-linecap="round"/>` },
+    { id: 'fez', name: 'Fez', cost: 2e4, desc: 'Tassel included',
+      svg: `<path d="M22 17 L24 -3 L40 -3 L42 17 Q32 20 22 17 Z" fill="#c8202a" stroke="#1c1f2b" stroke-width="1.2"/>
+        <ellipse cx="32" cy="-3" rx="8" ry="2" fill="#a3141f"/><path d="M32 -3 Q40 -2 41 8" fill="none" stroke="#ffd43b" stroke-width="1.5"/>
+        <circle cx="41" cy="9" r="2" fill="#ffd43b"/>` },
+    { id: 'beanie', name: 'Beanie', cost: 5e4, desc: 'Cosy ears, better focus',
+      svg: `<path d="M12 19 C11 -5 53 -5 52 19 Z" fill="#2fb85a" stroke="#17753a" stroke-width="1"/>
+        <path d="M11 14 Q32 20 53 14 L53 21 Q32 27 11 21 Z" fill="#1f8f45"/><circle cx="32" cy="-3" r="5.5" fill="#eef7f0"/>` },
+    { id: 'chef', name: "Chef's Hat", cost: 1.5e5, desc: 'Cooks up pops',
+      svg: `<g fill="#fff"><circle cx="24" cy="2" r="8"/><circle cx="40" cy="2" r="8"/><circle cx="32" cy="-4" r="9"/><rect x="21" y="3" width="22" height="14" rx="2"/></g>
+        <path d="M21 10 H43" stroke="#d6d9e3" stroke-width="1.2"/>
+        <path d="M17 1 A8 8 0 0 1 24 -6 A9 9 0 0 1 40 -6 A8 8 0 0 1 47 1" fill="none" stroke="#c9ced8" stroke-width="1"/>` },
+    { id: 'cowboy', name: 'Cowboy Hat', cost: 4e5, desc: 'Yee-pop',
+      svg: `<path d="M23 14 C21 0 27 -4 32 -1 C37 -4 43 0 41 14 Z" fill="#a86d36" stroke="#6a401c" stroke-width="1"/>
+        <rect x="23" y="9" width="18" height="3.5" fill="#4a2e14"/>
+        <path d="M6 12 Q10 20 32 20 Q54 20 58 12 Q50 15 32 14 Q14 15 6 12 Z" fill="#8a5a2b" stroke="#6a401c" stroke-width="1"/>` },
+    { id: 'pirate', name: 'Pirate Hat', cost: 1e6, desc: 'Arr, pop the balloon',
+      svg: `<path d="M8 17 Q12 -4 32 -6 Q52 -4 56 17 Q32 9 8 17 Z" fill="#1c1f2b" stroke="#000" stroke-width="1"/>
+        <path d="M8 17 Q32 9 56 17" fill="none" stroke="#f5c518" stroke-width="1.8"/>
+        <circle cx="32" cy="3" r="3.2" fill="#fff"/><path d="M28 8 L36 11 M36 8 L28 11" stroke="#fff" stroke-width="1.5"/>` },
+    { id: 'headphones', name: 'Headphones', cost: 2.5e6, desc: 'Plays Calypso Pop on loop',
+      svg: `<path d="M9 31 C7 3 57 3 55 31" fill="none" stroke="#3a3f52" stroke-width="3.5"/>
+        <rect x="3" y="24" width="10" height="15" rx="4" fill="#2fb3c9" stroke="#1c1f2b" stroke-width="1"/>
+        <rect x="51" y="24" width="10" height="15" rx="4" fill="#2fb3c9" stroke="#1c1f2b" stroke-width="1"/>` },
+    { id: 'viking', name: 'Viking Helmet', cost: 8e6, desc: 'Horns are extra pointy',
+      svg: `<path d="M15 13 Q4 9 5 -6 Q11 5 19 6 Z" fill="#f2eee4" stroke="#8a8270" stroke-width="1"/>
+        <path d="M49 13 Q60 9 59 -6 Q53 5 45 6 Z" fill="#f2eee4" stroke="#8a8270" stroke-width="1"/>
+        <path d="M13 19 C13 -3 51 -3 51 19 Z" fill="#9aa3b5" stroke="#4a4f60" stroke-width="1.2"/>
+        <rect x="12" y="14" width="40" height="6" rx="2" fill="#6b7488"/><path d="M32 -1 L32 14" stroke="#6b7488" stroke-width="3"/>` },
+    { id: 'hardhat', name: 'Hard Hat', cost: 2e7, desc: 'Required by the union',
+      svg: `<path d="M13 18 C12 -5 52 -5 51 18 Z" fill="#f5c518" stroke="#a88100" stroke-width="1"/>
+        <path d="M8 16 Q32 22 58 15 L58 19 Q32 26 8 20 Z" fill="#f5c518" stroke="#a88100" stroke-width="1"/>
+        <rect x="30" y="-1" width="4" height="17" fill="#d9a800"/>` },
+    { id: 'wizard', name: 'Wizard Hat', cost: 6e7, desc: 'Monkey magic',
+      svg: `<polygon points="34,-19 20,15 46,15" fill="#3b2a8f" stroke="#1c1f2b" stroke-width="1.2" stroke-linejoin="round"/>${star(33, 0, 4, '#ffd43b')}
+        <ellipse cx="33" cy="15" rx="18" ry="3.5" fill="#2a1d6b"/>` },
+    { id: 'sombrero', name: 'Sombrero', cost: 1.5e8, desc: 'Siesta after this shift',
+      svg: `<path d="M24 14 C23 -3 41 -3 40 14 Z" fill="#e3c27a" stroke="#a88542" stroke-width="1"/>
+        <path d="M24.5 8 Q32 10 39.5 8" stroke="#c8202a" stroke-width="2" fill="none"/>
+        <ellipse cx="32" cy="14" rx="30" ry="5.5" fill="#e3c27a" stroke="#c8202a" stroke-width="1.4"/>` },
+    { id: 'beret', name: 'Beret', cost: 3e8, desc: 'Ooh la la',
+      svg: `<path d="M11 17 C7 4 40 -2 56 8 C60 12 56 18 50 19 Q32 22 13 19 Z" fill="#7a1a3a" stroke="#4a0d22" stroke-width="1"/>
+        <path d="M34 2 q1 -4 3 -5" stroke="#4a0d22" stroke-width="2" stroke-linecap="round"/>` },
+    { id: 'crown', name: 'Tiny Crown', cost: 5e8, desc: 'King of the monkeys',
+      svg: `<path d="M20 17 L19 1 L26 8 L32 -3 L38 8 L45 1 L44 17 Z" fill="#f5c518" stroke="#a88100" stroke-width="1.2" stroke-linejoin="round"/>
+        <circle cx="32" cy="12" r="2.2" fill="#e8323c"/>` },
+    { id: 'tophat', name: 'Top Hat', cost: 1e9, desc: 'Management material',
+      svg: `<rect x="21" y="-13" width="22" height="28" rx="1.5" fill="#1c1f2b"/><rect x="21" y="7" width="22" height="4" fill="#e8323c"/>
+        <ellipse cx="32" cy="15" rx="16" ry="3.2" fill="#1c1f2b"/><rect x="24" y="-10" width="2.5" height="16" fill="#fff" opacity="0.15"/>` },
+  ];
+
+  // Monkey upgrades: each tier doubles that monkey type's output.
+  const UP_NAMES = { orbit: ['Sharper Pins', 'Longer Pins', 'Golden Pins'], throw: ['Sharper Darts', 'Quick Hands', 'Golden Darts'] };
+  const UP_NEED = [1, 10, 25], UP_COST = [10, 60, 600];
+  const upCost = (m, k) => Math.ceil(m.cost * UP_COST[k]);
+
+  // Each monkey's call: syllables of [start pitch, end pitch, length, vowel, gap].
+  const VOICES = {
+    baby:      { base: 700, say: 'Eee eee!',          syl: [[1.2, 1.5, 0.09, 'ee'], [1.2, 1.5, 0.09, 'ee'], [1.3, 1.7, 0.12, 'ee']] },
+    spider:    { base: 420, say: 'Ooh ooh aah!',      syl: [[1, 1.3, 0.12, 'oo'], [1, 1.3, 0.12, 'oo'], [1.4, 1.1, 0.18, 'ah']] },
+    snow:      { base: 300, say: 'Hoo hoo.',          syl: [[1, 1.15, 0.2, 'oo', 0.08], [1.1, 0.9, 0.25, 'oo']] },
+    golden:    { base: 950, say: 'Chee-chee-chee!',   syl: [0, 1, 2, 3, 4].map(() => [1, 1.25, 0.06, 'ee', 0.02]) },
+    dart:      { base: 380, say: 'Ooh ooh aah aah!',  syl: [[1, 1.3, 0.12, 'oo'], [1, 1.3, 0.12, 'oo'], [1.5, 1.2, 0.16, 'ah'], [1.5, 1.2, 0.16, 'ah']] },
+    ninja:     { base: 330, say: 'Hai!',              syl: [[1.3, 0.9, 0.12, 'ah']], extra: 'swish' },
+    orangutan: { base: 150, say: 'Hoooo-ooo',         syl: [[1, 1.6, 0.45, 'oo', 0.05], [1.6, 1.2, 0.35, 'oh']] },
+    space:     { base: 400, say: 'Ooh ooh... beep!',  syl: [[1, 1.3, 0.1, 'oo'], [1, 1.3, 0.1, 'oo'], [1.5, 1.2, 0.14, 'ah']], type: 'square', vib: 25, extra: 'beep' },
+  };
+
+  // ---------- State ----------
+  const KEY = 'pop-clicker-save-v1';
+  const fresh = () => ({ pops: 0, total: 0, clicks: 0, needle: 0, colour: 0, minions: {}, hats: {}, hat: null, look: 0, up: {}, mhats: {}, mhat: null, sound: true, music: true,
+    opt: { style: 'body', needles: 'detailed', real: false, bg: 'plain' }, feed: [], news: [], union: 0, marks: {}, unread: 0, rel: 50, boosts: [],
+    born: Date.now(), t: Date.now() });
+  let S;
+  let tab = 'needles';
+
+  const mult = () => COLOURS[S.colour].mult;
+  const perClick = () => NEEDLES[S.needle].click * mult();
+  const tierOf = m => S.up[m.id] || 0;
+  const unitPps = m => m.pps * Math.pow(2, tierOf(m));
+  // Union standing (0-100) sets a baseline worker speed of ×0.85 to ×1.15; choices add temporary boosts on top.
+  function workerMult() {
+    const now = Date.now();
+    let m = 0.85 + S.rel * 0.003;
+    for (const b of S.boosts) if (b.until > now) m *= b.mult;
+    return m;
+  }
+  const pps = () => MINIONS.reduce((a, m) => a + (S.minions[m.id] || 0) * unitPps(m), 0) * mult() * workerMult();
+  const minionCost = m => Math.ceil(m.cost * Math.pow(1.15, S.minions[m.id] || 0));
+
+  function fmt(n, dec) {
+    if (n < 1000) return dec && n < 100 && n % 1 ? n.toFixed(1) : Math.floor(n).toLocaleString('en-GB');
+    const units = ['K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx'];
+    let i = -1;
+    while (n >= 1000 && i < units.length - 1) { n /= 1000; i++; }
+    return (n < 10 ? n.toFixed(2) : n < 100 ? n.toFixed(1) : Math.floor(n)) + units[i];
+  }
+
+  function save() {
+    S.t = Date.now();
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+  }
+  function load() {
+    let s = fresh();
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) s = Object.assign(fresh(), JSON.parse(raw));
+    } catch (e) {}
+    return migrate(s);
+  }
+  function migrate(s) {
+    s.up = s.up || {}; s.mhats = s.mhats || {};
+    s.opt = Object.assign({ style: 'body', needles: 'detailed', real: false, bg: 'plain' }, s.opt);
+    s.feed = s.feed || []; s.news = s.news || []; s.marks = s.marks || {};
+    s.union = s.union || 0; s.unread = s.unread || 0; s.born = s.born || Date.now();
+    if (s.rel == null) s.rel = 50; s.boosts = s.boosts || [];
+    if (!s.news.length) s.news.push({ t: s.born, h: 'Pop Clicker opens for business', rot: -0.8,
+      b: 'A single red balloon and one sewing pin were unveiled this morning. "We expect big things," said the balloon, shortly before being popped.',
+      c: 'The balloon, pictured before its first day.', img: { type: 'balloon', ci: 0 } });
+    if (s.look == null || s.look > s.colour) s.look = s.colour;
+    for (const [from, to] of Object.entries(OLD_IDS)) {
+      if (s.minions[from]) { s.minions[to] = (s.minions[to] || 0) + s.minions[from]; delete s.minions[from]; }
+    }
+    return s;
+  }
+
+  // ---------- DOM ----------
+  const $ = id => document.getElementById(id);
+  const stage = $('stage'), balloon = $('balloon'), row = $('row'), crew = $('crew');
+  const popsEl = $('pops'), ppsEl = $('pps'), ppcEl = $('ppc'), multEl = $('mult');
+  const canvas = $('fx'), cx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function shade(hex, amt) {
+    const n = parseInt(hex.slice(1), 16), to = amt > 0 ? 255 : 0, a = Math.abs(amt);
+    const c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v + (to - v) * a));
+    return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
+  }
+  // Needles are drawn lying along x: tip at x=0, eye/head end around x=60.
+  function needleDetailed(n) {
+    const [hi, mid, lo] = n.metal, hc = n.hc || mid;
+    const edge = `stroke="#1c1f2b" stroke-opacity="0.55" stroke-width="0.5"`;
+    let s = `<defs><linearGradient id="m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${lo}"/>` +
+      `<stop offset="0.3" stop-color="${hi}"/><stop offset="0.55" stop-color="${mid}"/><stop offset="1" stop-color="${lo}"/></linearGradient>` +
+      `<radialGradient id="h" cx="0.35" cy="0.32" r="0.72"><stop offset="0" stop-color="#fff"/><stop offset="0.35" stop-color="${hc}"/>` +
+      `<stop offset="1" stop-color="${shade(hc, -0.55)}"/></radialGradient></defs>`;
+    let hl = 50;
+    if (n.kind === 'pin') {
+      const L = n.len; hl = L - 3;
+      s += `<path d="M0 0 L7 -0.8 L${L} -0.85 L${L} 0.85 L7 0.8 Z" fill="url(#m)" ${edge}/>` +
+        `<circle cx="${L + n.r - 1}" cy="0" r="${n.r}" fill="url(#h)" ${edge}/>`;
+    } else if (n.kind === 'needle') {
+      s += `<path d="M0 0 L10 -1.1 L55 -1.3 Q59 -1.3 59 0 Q59 1.3 55 1.3 L10 1.1 Z" fill="url(#m)" ${edge}/>` +
+        `<ellipse cx="52" cy="0" rx="3.6" ry="0.55" fill="#1c1f2b"/>` +
+        `<path d="M52 0.3 C57 5 63 0 62 6.5" fill="none" stroke="${n.thread}" stroke-width="1" stroke-linecap="round"/>`;
+    } else if (n.kind === 'knit') {
+      s += `<path d="M0 0 Q1 -2.2 7 -2.3 L54 -2.4 L54 2.4 L7 2.3 Q1 2.2 0 0 Z" fill="url(#m)" ${edge}/>` +
+        `<circle cx="57.5" cy="0" r="4.2" fill="url(#h)" ${edge}/>`;
+    } else if (n.kind === 'spine') {
+      s += `<path d="M0 0 Q28 -2.6 60 -1.8 L60 1.8 Q28 1.2 0 0 Z" fill="url(#m)" ${edge}/><rect x="56" y="-1.8" width="4" height="3.6" fill="${lo}"/>`;
+    } else if (n.kind === 'quill') {
+      s += `<path d="M0 0 L12 -1.6 L60 -2.1 L60 2.1 L12 1.6 Z" fill="url(#m)" ${edge}/>` +
+        `<rect x="40" y="-2" width="4" height="4" fill="#3a2a1a" opacity="0.85"/><rect x="48" y="-2.05" width="5" height="4.1" fill="#3a2a1a" opacity="0.85"/>`;
+      hl = 38;
+    } else if (n.kind === 'gem') {
+      s += `<path d="M0 0 L10 -1.1 L54 -1.3 L54 1.3 L10 1.1 Z" fill="url(#m)" ${edge}/>` +
+        `<polygon points="54,0 59,-4 65,0 59,4" fill="url(#h)" ${edge}/><path d="M56 0 L59 -2.5 L62 0" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.9"/>`;
+    }
+    return s + `<path d="M4 -0.35 L${hl} -0.7" stroke="#fff" stroke-opacity="0.75" stroke-width="0.45" stroke-linecap="round"/>`;
+  }
+  function needleBasic(n) {
+    const o = '#1c1f2b';
+    let s = `<line x1="0" y1="0" x2="46" y2="0" stroke="${o}" stroke-width="${n.w + 2}" stroke-linecap="round"/>` +
+      `<line x1="0.8" y1="0" x2="46" y2="0" stroke="${n.shaft}" stroke-width="${n.w}" stroke-linecap="round"/>`;
+    if (n.head === 'ball') s += `<circle cx="50" cy="0" r="${n.kind === 'pin' ? n.r + 0.6 : 4.5}" fill="${n.hc}" stroke="${o}" stroke-width="1.2"/>`;
+    if (n.head === 'eye') s += `<ellipse cx="48" cy="0" rx="6" ry="3" fill="${n.shaft}" stroke="${o}" stroke-width="1.2"/><ellipse cx="48" cy="0" rx="3" ry="1" fill="${o}"/>`;
+    if (n.head === 'band') s += `<line x1="38" y1="0" x2="44" y2="0" stroke="${n.hc}" stroke-width="${n.w + 1.4}"/>`;
+    if (n.head === 'gem') s += `<polygon points="45,0 51,-5 57,0 51,5" fill="${n.hc}" stroke="${o}" stroke-width="1.1"/>`;
+    return s;
+  }
+  const needleMode = () => (S && S.opt.real) ? 'detailed' : (S ? S.opt.needles : 'detailed');
+  const needleShape = n => needleMode() === 'basic' ? needleBasic(n) : needleDetailed(n);
+  function cursorSVG(n) {
+    const size = needleMode() === 'basic' ? 32 : 48, sc = size * 1.3 / 68;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
+      `<g transform="translate(3 ${size - 3}) rotate(-45) scale(${sc.toFixed(3)})">${needleShape(n)}</g></svg>`;
+  }
+  const holdSVG = n => `<svg xmlns="http://www.w3.org/2000/svg" width="68" height="14" viewBox="-1 -7 68 14">${needleShape(n)}</svg>`;
+  const svgURI = s => 'data:image/svg+xml,' + encodeURIComponent(s);
+
+  // ---------- Photorealistic mode: real photographs from Wikimedia Commons ----------
+  const PHOTO_SIZE = {"b_blue":[480,620],"h_banana":[323,380],"h_beanie":[420,415],"h_beret":[420,188],"h_bowler":[420,334],"h_cowboy":[480,477],"h_crown":[420,398],"h_fez":[380,299],"h_hardhat":[420,369],"h_headphones":[219,260],"h_party":[234,377],"h_pirate":[460,286],"h_propeller":[420,400],"h_sombrero":[520,434],"h_tophat":[415,420],"h_viking":[420,385],"h_wizard":[420,348]};
+  const COLOUR_KEYS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'gold', 'rainbow'];
+  // Monkey photos: [file, head centre x, head top y, head width, paw x, paw y, side the paw is on (1 right, -1 left)], as fractions of the photo.
+  const PM = {
+    baby: ['m_baby', 0.35, 0.03, 0.5, 0.9, 0.73, 1], spider: ['m_spider', 0.55, 0.04, 0.34, 0.1, 0.2, -1],
+    snow: ['m_snow', 0.7, 0.03, 0.44, 0.78, 0.86, 1], golden: ['m_golden', 0.5, 0.01, 0.46, 0.86, 0.66, 1],
+    dart: ['m_dart', 0.2, 0.03, 0.32, 0.13, 0.9, -1], ninja: ['m_ninja', 0.6, 0.01, 0.62, 0.92, 0.85, 1],
+    orangutan: ['m_orangutan', 0.3, 0.01, 0.5, 0.82, 0.8, 1], space: ['m_space', 0.5, 0.02, 0.5, 0.97, 0.9, 1],
+  };
+  // Balloon hat photos: [width, bottom edge] in balloon units, so each one sits down onto the crown.
+  const BHP = { party: [64, 50], beanie: [110, 62], propeller: [114, 60], beret: [124, 44], cowboy: [152, 56], bowler: [120, 54],
+    tophat: [104, 52], fez: [92, 50], sombrero: [158, 60], wizard: [140, 52], pirate: [150, 46], hardhat: [120, 56], crown: [96, 52], viking: [112, 76] };
+  // Monkey hat photos: [width relative to head width, fraction of the hat that sinks onto the head].
+  const MHP = { party: [0.7, 0.1], banana: [0.8, 0.25], fez: [0.9, 0.14], pirate: [1.5, 0.22], viking: [1.1, 0.45], wizard: [1.4, 0.16],
+    crown: [0.95, 0.16], tophat: [1.0, 0.12], cowboy: [1.5, 0.22], beanie: [1.1, 0.42], hardhat: [1.15, 0.36], headphones: [1.25, 0.75],
+    sombrero: [1.9, 0.22], beret: [1.2, 0.32] };
+  const CREDITS = [["Baby Monkey", "Kalyan Varma", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3ABaby_macaque_DSC_8412.jpg"], ["Spider Monkey", "Charles J. Sharp", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3AGeoffroy%27s_spider_monkey_%28Ateles_geoffroyi_yucatanensis%29_male_Peten.jpg"], ["Snow Monkey", "Lorie Shaull", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3AJapanese_macaque_also_called_snow_monkey_01.jpg"], ["Golden Monkey", "Giovanni Mari", "CC BY-SA 2.0", "https://commons.wikimedia.org/wiki/File%3AGolden_Snub-nosed_Monkeys%2C_Qinling_Mountains_-_China.jpg"], ["Dart Monkey", "David M. Jensen (Storkk)", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3ACapuchin_Costa_Rica.jpg"], ["Ninja Monkey", "WeaponizingArchitecture", "CC0", "https://commons.wikimedia.org/wiki/File%3AMacaca_nigra_self-portrait_transparent.png"], ["Orangutan Ace", "Malene Thyssen", "CC BY 2.5", "https://commons.wikimedia.org/wiki/File%3APongo_pygmaeus_%28orangutang%29.jpg"], ["Space Monkey (Miss Baker, NASA)", "NASA/Marshall Space Flight Center", "Public domain", "https://commons.wikimedia.org/wiki/File%3AMiss_Baker%2C_the_squirrel_monkey.jpg"], ["Party photo", "Polylerus at English Wikipedia", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3APartyhat.JPG"], ["Beanie photo", "Menswear Market", "CC BY 2.0", "https://commons.wikimedia.org/wiki/File%3ABeanie_hat_by_Polo_Ralph_Lauren.jpg"], ["Propeller photo", "Gabitgay", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3APropeller_Hat.jpg"], ["Cowboy photo", "RandomKatze", "CC0", "https://commons.wikimedia.org/wiki/File%3AWhite_cowboy_hat_from_Calgary.jpg"], ["Top hat photo", "Nikodem Nijaki", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3ACollapsible_top_hat_IMGP9692.jpg"], ["Bowler photo", "Peloponnesian Folklore Foundation", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3ABowler_hat%2C_Vienna%2C_mid-20th_century.jpg"], ["Beret photo", "Unknown", "CC0", "https://commons.wikimedia.org/wiki/File%3ABeret_MET_53.4.1_CP1.jpg"], ["Sombrero photo", "لا روسا", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3AMexican_Sombrero_00_%288%29.JPG"], ["Fez photo", "Édouard Hue (User:EdouardHue)", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3AFez.jpg"], ["Pirate photo", "Unknown", "CC0", "https://commons.wikimedia.org/wiki/File%3ATricorne_MET_260003.jpg"], ["Wizard photo", "Evan Swigart from Chicago, USA", "CC BY 2.0", "https://commons.wikimedia.org/wiki/File%3AHalloween_pumpkin_witch_hat_-_Evan_Swigart.jpg"], ["Crown photo", "Hwap.official", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3ARussian_Crown_Jewel_Replica.jpg"], ["Viking photo", "Marieke Kuijjer", "CC BY-SA 2.0", "https://commons.wikimedia.org/wiki/File%3AViking_helmet.jpg"], ["Hard hat photo", "Batholith (talk)", "Public domain", "https://commons.wikimedia.org/wiki/File%3AHard_hat_20111111.jpg"], ["Headphones photo", "Sprinno", "CC0", "https://commons.wikimedia.org/wiki/File%3AHeadphones_on_white_background.jpg"], ["Banana photo", "Filo gèn'", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3ABanana_on_whitebackground.jpg"], ["Pins", "Pavel Krok", "CC BY-SA 2.5", "https://commons.wikimedia.org/wiki/File%3AStraight_pin.jpg"], ["Needles", "User: MrX", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3ASewing_needle.png"], ["Knitting needle, cactus spine and quill (tinted)", "Pschemp", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3AStraight_knitting_needles.JPG"], ["Balloons (all colours, recoloured)", "liz west from Boxborough, MA, USA", "CC BY 2.0", "https://commons.wikimedia.org/wiki/File:Balloons_cutout_(10464445726).png"]];
+  const PIMG = {};
+  function photo(name) {
+    if (!PIMG[name]) { const i = new Image(); i.decoding = 'async'; i.src = `photos/${name}.webp`; PIMG[name] = i; }
+    return PIMG[name];
+  }
+  const photoReady = i => i.complete && i.naturalWidth > 0;
+
+  // Monkey rigs: viewBox, the anchor point placed at the monkey's position, the paw that holds the needle and the throwing paw.
+  const RIG = {
+    body: { vb: [0, -10, 64, 96], anchor: [32, 60], paw: [59, 44], throwPaw: [11, 81] },
+    head: { vb: [0, -20, 64, 84], anchor: [32, 32], paw: [53, 41], throwPaw: [11, 40] },
+  };
+  function monkeySVG(L, hatId, mode, real) {
+    mode = mode || (S ? S.opt.style : 'body');
+    real = real ?? !!(S && S.opt.real);
+    const d = '#1c1f2b', hat = MHATS.find(h => h.id === hatId), body = mode === 'body';
+    const fur = real ? 'url(#fg)' : L.fur, skin = real ? 'url(#sg)' : L.face;
+    const suit = L.suit ? (real ? 'url(#ug)' : L.suit) : fur;
+    const furF = real ? ' filter="url(#fur)"' : '';
+    const [vx, vy, W, H] = RIG[mode].vb;
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="${vx} ${vy} ${W} ${H}">`;
+    if (real) s += `<defs>
+      <radialGradient id="fg" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="${shade(L.fur, 0.25)}"/><stop offset="0.6" stop-color="${L.fur}"/><stop offset="1" stop-color="${shade(L.fur, -0.5)}"/></radialGradient>
+      <radialGradient id="sg" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="${shade(L.face, 0.2)}"/><stop offset="0.7" stop-color="${L.face}"/><stop offset="1" stop-color="${shade(L.face, -0.3)}"/></radialGradient>
+      <radialGradient id="ug" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="${shade(L.suit || L.fur, 0.2)}"/><stop offset="1" stop-color="${shade(L.suit || L.fur, -0.35)}"/></radialGradient>
+      <radialGradient id="ig" cx="0.4" cy="0.35" r="0.7"><stop offset="0" stop-color="#9a6528"/><stop offset="1" stop-color="#2e1606"/></radialGradient>
+      <filter id="fur" x="-15%" y="-15%" width="130%" height="130%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9 0.35" numOctaves="2" seed="4" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+        <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -0.9 0.55" result="g"/>
+        <feComposite in="g" in2="d" operator="in" result="gi"/>
+        <feMerge><feMergeNode in="d"/><feMergeNode in="gi"/></feMerge>
+      </filter>
+      <filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-opacity="0.35"/></filter>
+    </defs><g filter="url(#sh)">`;
+    if (body) {
+      // Sitting on its haunches: knees up, one long arm resting on the ground, the other raised to hold the needle.
+      s += `<g${furF}><path d="M46 78 C62 84 66 66 57 61 C51 58 47 63 52 66" fill="none" stroke="${fur}" stroke-width="4" stroke-linecap="round"/></g>`;
+      s += `<g${L.suit ? '' : furF}>
+        <ellipse cx="32" cy="73" rx="18" ry="11" fill="${suit}"/>
+        <ellipse cx="32" cy="59" rx="15" ry="16" fill="${suit}"/>
+        <path d="M20 50 Q10 62 11 80" fill="none" stroke="${suit}" stroke-width="6.5" stroke-linecap="round"/>
+        <path d="M44 50 Q54 50 58 45" fill="none" stroke="${suit}" stroke-width="6.5" stroke-linecap="round"/>
+        <ellipse cx="19" cy="70" rx="8.5" ry="7.5" fill="${suit}"/><ellipse cx="45" cy="70" rx="8.5" ry="7.5" fill="${suit}"/></g>`;
+      if (!L.suit) s += `<ellipse cx="32" cy="62" rx="9" ry="10" fill="${skin}"/>`;
+      if (L.acc === 'ninja') s += `<rect x="18" y="64" width="28" height="4" rx="1.5" fill="#b3202a"/>`;
+      if (L.acc === 'helmet') s += `<circle cx="32" cy="58" r="4" fill="#2f7fe8" stroke="${d}" stroke-width="0.8"/>`;
+      s += `<ellipse cx="15" cy="80" rx="8" ry="4" fill="${skin}"/><ellipse cx="49" cy="80" rx="8" ry="4" fill="${skin}"/>
+        <path d="M10 81 v2 M13 81.5 v2 M16 81.5 v2 M48 81.5 v2 M51 81.5 v2 M54 81 v2" stroke="${shade(L.face, -0.35)}" stroke-width="0.9" stroke-linecap="round"/>
+        <ellipse cx="11" cy="81" rx="5" ry="3.3" fill="${skin}"/><circle cx="59" cy="44" r="4.4" fill="${skin}"/>`;
+      s += `<g transform="translate(32 36) scale(0.8) translate(-32 -32)">`;
+    }
+    s += `<g${furF}><circle cx="11" cy="31" r="9" fill="${fur}"/><circle cx="53" cy="31" r="9" fill="${fur}"/><circle cx="32" cy="32" r="21" fill="${fur}"/>`;
+    if (L.acc === 'tuft') s += `<path d="M27 13 Q29 4 33 10 Q36 3 38 12" fill="none" stroke="${fur}" stroke-width="3.5" stroke-linecap="round"/>`;
+    s += `</g><circle cx="11" cy="31" r="5" fill="${skin}"/><circle cx="53" cy="31" r="5" fill="${skin}"/>`;
+    if (L.acc === 'cheeks') s += `<ellipse cx="32" cy="36" rx="24" ry="14" fill="${skin}" opacity="0.6"/>`;
+    s += `<ellipse cx="26" cy="30" rx="8" ry="8.5" fill="${skin}"/><ellipse cx="38" cy="30" rx="8" ry="8.5" fill="${skin}"/>` +
+      `<ellipse cx="32" cy="40" rx="13" ry="9" fill="${skin}"/>`;
+    if (L.acc === 'headband') s += `<rect x="12" y="15" width="40" height="7" rx="3" fill="#e8323c"/><path d="M50 18 L60 12 M50 19 L61 23" stroke="#e8323c" stroke-width="3" stroke-linecap="round"/>`;
+    if (L.acc === 'ninja') s += `<rect x="10" y="23" width="44" height="13" rx="5" fill="#b3202a"/><path d="M52 26 L62 19 L61 31 Z" fill="#b3202a"/>` +
+      `<circle cx="26.5" cy="30" r="4.4" fill="#fff"/><circle cx="37.5" cy="30" r="4.4" fill="#fff"/>`;
+    if (real) {
+      s += `<circle cx="26.5" cy="30" r="3.3" fill="url(#ig)"/><circle cx="37.5" cy="30" r="3.3" fill="url(#ig)"/>` +
+        `<circle cx="26.5" cy="30.3" r="1.5" fill="#0b0604"/><circle cx="37.5" cy="30.3" r="1.5" fill="#0b0604"/>` +
+        `<circle cx="27.6" cy="29" r="0.9" fill="#fff"/><circle cx="38.6" cy="29" r="0.9" fill="#fff"/>` +
+        `<path d="M21 25.5 Q26.5 22.5 31 25.5 M33 25.5 Q37.5 22.5 43 25.5" fill="none" stroke="${shade(L.face, -0.45)}" stroke-width="1.6" stroke-linecap="round" opacity="0.7"/>` +
+        `<ellipse cx="30.2" cy="38" rx="1.1" ry="0.8" fill="#2a1a10"/><ellipse cx="33.8" cy="38" rx="1.1" ry="0.8" fill="#2a1a10"/>` +
+        `<path d="M27 43.5 Q32 46 37 43.5" fill="none" stroke="${shade(L.face, -0.5)}" stroke-width="1.2" stroke-linecap="round"/>`;
+    } else {
+      s += `<circle cx="26.5" cy="30" r="3" fill="${d}"/><circle cx="37.5" cy="30" r="3" fill="${d}"/>` +
+        `<circle cx="27.5" cy="29" r="1" fill="#fff"/><circle cx="38.5" cy="29" r="1" fill="#fff"/>` +
+        `<circle cx="30" cy="38" r="1.2" fill="${d}"/><circle cx="34" cy="38" r="1.2" fill="${d}"/>` +
+        `<path d="M26 43 Q32 48 38 43" fill="none" stroke="${d}" stroke-width="1.8" stroke-linecap="round"/>`;
+    }
+    if (hat && L.acc !== 'helmet') s += hat.svg;
+    if (L.acc === 'helmet') s += `<circle cx="32" cy="32" r="30" fill="#bfe6ff" fill-opacity="0.25" stroke="#dff4ff" stroke-width="2.5"/>` +
+      `<path d="M13 22 Q19 10 31 7" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="0.75"/>`;
+    if (hat && L.acc === 'helmet') s += `<g transform="translate(0 -9)">${hat.svg}</g>`;
+    if (body) s += `</g>`;
+    if (real) s += `</g>`;
+    return s + `</svg>`;
+  }
+  // Monkeys and the held needle are rasterised once to canvases, so drawing dozens per frame stays cheap.
+  function raster(svg, w, h) {
+    return new Promise(res => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = Math.round(w); c.height = Math.round(h);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        res(c);
+      };
+      img.onerror = () => res(null);
+      img.src = svgURI(svg.replace(/width="[\d.]+" height="[\d.]+"/, `width="${Math.round(w)}" height="${Math.round(h)}"`));
+    });
+  }
+  const MONKEY_URI = {}, MONKEY_IMG = {};
+  let imgGen = 0, NEEDLE_HOLD = null;
+  function buildMonkeyImages() {
+    reset3D();
+    if (S.opt.real) {
+      MINIONS.forEach(m => { MONKEY_URI[m.id] = `photos/${PM[m.id][0]}.webp`; photo(PM[m.id][0]); });
+      return;
+    }
+    const gen = ++imgGen, mode = S.opt.style, [, , W, H] = RIG[mode].vb;
+    MINIONS.forEach(m => {
+      const svg = monkeySVG(m.look, S.mhat);
+      MONKEY_URI[m.id] = svgURI(svg);
+      raster(svg, W * 5, H * 5).then(c => { if (c && gen === imgGen) MONKEY_IMG[m.id] = { c, mode }; });
+    });
+  }
+  const MODEL_LOOK = { fur: '#a86d36', face: '#f5d9b5' };
+  const mysteryURI = () => svgURI(monkeySVG({ fur: '#8f93a6', face: '#b9bccb' }));
+
+  function applyNeedle() {
+    const n = NEEDLES[S.needle], size = needleMode() === 'basic' ? 32 : 48;
+    stage.style.cursor = `url("${svgURI(cursorSVG(n))}") 3 ${size - 3}, crosshair`;
+    const want = S.needle + needleMode();
+    raster(holdSVG(n), 544, 112).then(c => { if (c && S.needle + needleMode() === want) NEEDLE_HOLD = c; });
+  }
+  function applyColour() {
+    const col = COLOURS[S.look];
+    ['s0', 's1', 's2'].forEach((id, i) => $(id).setAttribute('stop-color', col.c[i]));
+    $('body').setAttribute('fill', col.rainbow ? 'url(#rainbow)' : 'url(#bfill)');
+    $('knot').setAttribute('fill', col.rainbow ? '#9b4dff' : col.c[2]);
+    $('bphoto').setAttribute('href', S.opt.real ? `photos/b_${COLOUR_KEYS[S.look]}.webp` : '');
+  }
+  function applyHat() {
+    const h = HATS.find(h => h.id === S.hat), ph = h && S.opt.real && BHP[h.id];
+    if (ph) {
+      const [w, bottom] = ph, [W, H] = PHOTO_SIZE['h_' + h.id], hh = w * H / W;
+      $('hat').innerHTML = `${SH}<image href="photos/h_${h.id}.webp" x="${100 - w / 2}" y="${bottom - hh}" width="${w}" height="${hh}" filter="url(#hatShadow)"/>`;
+    } else $('hat').innerHTML = h ? h.svg : '';
+  }
+  function renderCrew() {
+    const owned = MINIONS.filter(m => S.minions[m.id]);
+    crew.innerHTML = owned.length
+      ? owned.map(m => `<span class="chip" title="${m.name}"><img src="${MONKEY_URI[m.id]}" alt="">${m.name} ×${S.minions[m.id]}</span>`).join('')
+      : `<span class="empty">No monkeys yet. Hire some from the Monkeys tab.</span>`;
+    $('replayBtn').hidden = !S.hats.halo;
+  }
+
+  // ---------- Shop ----------
+  function card({ kind, id, art, name, desc, cost, right, owned, locked }) {
+    return `<button type="button" class="card${owned ? ' owned' : ''}${locked ? ' locked' : ''}"
+      data-kind="${kind}" data-id="${id}" data-cost="${owned || locked ? '' : cost}" ${locked ? 'aria-disabled="true"' : ''}>
+      <span class="art">${art}</span><span class="name">${name}</span><span class="desc">${desc}</span>
+      <span class="foot"><span class="cost">${typeof cost === 'number' ? fmt(cost) + ' pops' : cost}</span><span class="own">${right || ''}</span></span>
+    </button>`;
+  }
+
+  function renderRow() {
+    let html = '';
+    if (tab === 'needles') {
+      html = NEEDLES.map((n, i) => card({
+        kind: 'needle', id: i, name: n.name,
+        art: S.opt.real ? `<img class="nphoto" src="photos/n${i}.webp" alt="">` : `<img src="${svgURI(cursorSVG(n))}" alt="">`,
+        desc: `${fmt(n.click)} pop${n.click > 1 ? 's' : ''} per click`,
+        cost: i === S.needle ? 'In hand' : i < S.needle ? 'Owned' : n.cost,
+        owned: i <= S.needle, locked: i > S.needle + 1,
+        right: i > S.needle + 1 ? 'Locked' : '',
+      })).join('');
+    } else if (tab === 'minions') {
+      html = MINIONS.map((m, i) => {
+        const prevOwned = i === 0 || S.minions[MINIONS[i - 1].id] || S.minions[m.id];
+        return card({
+          kind: 'minion', id: m.id, name: prevOwned ? m.name : '???', art: `<img class="monkey" src="${prevOwned ? MONKEY_URI[m.id] : mysteryURI()}" alt="">`,
+          desc: prevOwned ? `${fmt(unitPps(m), true)} pops/sec each. ${m.desc}` : `Hire a ${MINIONS[i - 1].name} to reveal`,
+          cost: minionCost(m), locked: !prevOwned, right: S.minions[m.id] ? '×' + S.minions[m.id] : '',
+        });
+      }).join('');
+    } else if (tab === 'colours') {
+      html = COLOURS.map((c, i) => card({
+        kind: 'colour', id: i, name: c.name + ' balloon',
+        art: S.opt.real ? `<img src="photos/b_${COLOUR_KEYS[i]}.webp" alt="">` : `<span class="swatch" style="background:${c.rainbow
+          ? 'conic-gradient(from 200deg, #ff4d5a, #ff9f2e, #ffe03a, #3ccf6e, #3a8cff, #9b4dff, #ff4d5a)'
+          : `radial-gradient(circle at 35% 30%, ${c.c[0]}, ${c.c[1]} 55%, ${c.c[2]})`}"></span>`,
+        desc: `×${c.mult} bonus. ${POP_SOUNDS[i].name}`,
+        cost: i === S.look ? 'Flying' : i <= S.colour ? 'Fly this' : c.cost,
+        owned: i <= S.colour, locked: i > S.colour + 1,
+        right: i > S.colour + 1 ? 'Locked' : '',
+      })).join('');
+    } else if (tab === 'upgrades') {
+      const owned = MINIONS.filter(m => S.minions[m.id]);
+      html = owned.length ? owned.map(m => {
+        const k = tierOf(m), img = `<img class="monkey" src="${MONKEY_URI[m.id]}" alt="">`;
+        if (k >= 3) return card({ kind: 'upgrade', id: m.id, art: img, name: m.name + ': fully trained',
+          desc: `Every ${m.name} pops 8× as fast`, cost: 'Trained', owned: true });
+        const n = S.minions[m.id], meets = n >= UP_NEED[k];
+        return card({ kind: 'upgrade', id: m.id, art: img, name: UP_NAMES[m.role][k],
+          desc: `${m.name}s pop twice as fast` + (meets ? '' : `. Needs ${UP_NEED[k]} ${m.name}s`),
+          cost: upCost(m, k), locked: !meets, right: meets ? `Tier ${k + 1}` : `${n}/${UP_NEED[k]}` });
+      }).join('') : card({ kind: 'none', id: '', art: `<img class="monkey" src="${mysteryURI()}" alt="">`, name: 'No upgrades yet',
+        desc: 'Hire a monkey to start training it', cost: '', locked: true });
+    } else if (tab === 'mhats') {
+      const art = id => S.opt.real && id && MHP[id] ? `<img src="photos/h_${id}.webp" alt="">` : `<img class="monkey" src="${svgURI(monkeySVG(MODEL_LOOK, id))}" alt="">`;
+      html = card({ kind: 'mhat', id: '', name: 'No hat', art: art(null), desc: 'Monkeys go bare-headed',
+        cost: S.mhat ? 'Take off' : 'Bare', owned: true }) +
+        MHATS.map(h => card({
+          kind: 'mhat', id: h.id, name: h.name, desc: h.desc + '. Every monkey wears it', art: art(h.id),
+          cost: S.mhats[h.id] ? (S.mhat === h.id ? 'Wearing' : 'Wear') : h.cost, owned: !!S.mhats[h.id],
+        })).join('');
+    } else {
+      html = card({ kind: 'hat', id: '', name: 'No hat', art: '<svg viewBox="25 -75 150 130"></svg>',
+        desc: 'Let the balloon go bare', cost: S.hat ? 'Take off' : 'Bare', owned: true }) +
+        HATS.map(h => card({
+          kind: 'hat', id: h.id, name: h.name, desc: h.desc,
+          art: S.opt.real && BHP[h.id] ? `<img src="photos/h_${h.id}.webp" alt="">` : `<svg viewBox="25 -75 150 130">${h.svg}</svg>`,
+          cost: S.hats[h.id] ? (S.hat === h.id ? 'Wearing' : 'Wear') : h.cost,
+          owned: !!S.hats[h.id],
+        })).join('');
+    }
+    row.innerHTML = html;
+    refresh();
+  }
+
+  function refresh() {
+    row.querySelectorAll('.card').forEach(el => {
+      const c = el.dataset.cost;
+      el.classList.toggle('can', c !== '' && S.pops >= +c);
+    });
+    const can = {
+      needles: NEEDLES[S.needle + 1] && S.pops >= NEEDLES[S.needle + 1].cost,
+      minions: MINIONS.some((m, i) => (i === 0 || S.minions[MINIONS[i - 1].id] || S.minions[m.id]) && S.pops >= minionCost(m)),
+      colours: COLOURS[S.colour + 1] && S.pops >= COLOURS[S.colour + 1].cost,
+      hats: HATS.some(h => !S.hats[h.id] && S.pops >= h.cost),
+      upgrades: MINIONS.some(m => S.minions[m.id] && tierOf(m) < 3 && S.minions[m.id] >= UP_NEED[tierOf(m)] && S.pops >= upCost(m, tierOf(m))),
+      mhats: MHATS.some(h => !S.mhats[h.id] && S.pops >= h.cost),
+    };
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('dot', !!can[t.dataset.tab]));
+  }
+
+  let lookBusy = false;
+  function changeLook(i) {
+    S.look = i;
+    renderRow(); save();
+    if (lookBusy) return;
+    lookBusy = true;
+    deflateSound();
+    balloon.classList.add('deflating');
+    setTimeout(() => {
+      applyColour();
+      balloon.classList.remove('deflating'); balloon.classList.add('inflating');
+      inflateSound();
+      setTimeout(() => { balloon.classList.remove('inflating'); lookBusy = false; applyColour(); }, 400);
+    }, reduceMotion ? 60 : 800);
+  }
+  // A monkey's hiring call plays once per run of buying the same type. Buying a different type, leaving the tab,
+  // or 10 seconds without buying resets it.
+  let buyCall = { id: null, t: 0 };
+  function buyCallSound(id) {
+    const now = performance.now();
+    if (buyCall.id !== id || now - buyCall.t > 10000) monkeyCall(id, 0.8);
+    buyCall = { id, t: now };
+  }
+  function randomOwnedMonkey() {
+    const owned = MINIONS.filter(m => S.minions[m.id]);
+    return owned.length ? owned[Math.floor(Math.random() * owned.length)].id : 'baby';
+  }
+
+  function buy(kind, id) {
+    let ok = false;
+    if (kind === 'needle') {
+      const i = +id, n = NEEDLES[i];
+      if (i === S.needle + 1 && S.pops >= n.cost) { S.pops -= n.cost; S.needle = i; applyNeedle(); needlePop(i); news('needle', i); ok = true; }
+    } else if (kind === 'minion') {
+      const m = MINIONS.find(m => m.id === id), c = minionCost(m);
+      if (S.pops >= c) { S.pops -= c; S.minions[id] = (S.minions[id] || 0) + 1; renderCrew(); buyCallSound(id); if (S.minions[id] === 1) news('monkey', id); ok = true; }
+    } else if (kind === 'upgrade') {
+      const m = MINIONS.find(m => m.id === id), k = tierOf(m);
+      if (k < 3 && S.minions[id] >= UP_NEED[k] && S.pops >= upCost(m, k)) {
+        S.pops -= upCost(m, k); S.up[id] = k + 1; monkeyCall(id, 0.8); ok = true;
+      }
+    } else if (kind === 'colour') {
+      const i = +id, c = COLOURS[i];
+      if (i <= S.colour) { if (i !== S.look) changeLook(i); return; }
+      if (i === S.colour + 1 && S.pops >= c.cost) { S.pops -= c.cost; S.colour = i; changeLook(i); news('colour', i); ok = true; }
+    } else if (kind === 'hat') {
+      if (!id) { if (S.hat) hatSwipe(); S.hat = null; applyHat(); renderRow(); save(); return; }
+      const h = HATS.find(h => h.id === id);
+      if (S.hats[id]) { S.hat = S.hat === id ? null : id; hatSwipe(); applyHat(); renderRow(); save(); return; }
+      if (S.pops >= h.cost) {
+        S.pops -= h.cost; S.hats[id] = true; S.hat = id; applyHat(); hatSwipe(); ok = true;
+        news(id === 'halo' ? 'ascend' : 'hat', id);
+        if (id === 'halo') blimp('Balloon ascends! Scientists baffled');
+        if (id === 'halo') { renderCrew(); setTimeout(ascend, 400); }
+      }
+    } else if (kind === 'mhat') {
+      const was = S.mhat;
+      if (!id) S.mhat = null;
+      else if (S.mhats[id]) S.mhat = S.mhat === id ? null : id;
+      else {
+        const h = MHATS.find(h => h.id === id);
+        if (S.pops < h.cost) return;
+        S.pops -= h.cost; S.mhats[id] = true; S.mhat = id; news('mhat', id);
+      }
+      if (S.mhat !== was) {
+        hatSwipe(); buildMonkeyImages(); renderCrew();
+        if (Object.keys(S.minions).length) setTimeout(() => monkeyCall(randomOwnedMonkey(), 0.5), 300);
+      }
+      ok = true;
+    }
+    if (ok) { renderRow(); updateHeader(); save(); }
+  }
+
+  // ---------- Audio ----------
+  let actx, comp, master, musicBus, sceneBus, realBus, noiseBuf;
+  function initAudio() {
+    if (actx) return;
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -6; comp.knee.value = 0; comp.ratio.value = 12;
+      comp.attack.value = 0; comp.release.value = 0.05;
+      master = actx.createGain();
+      master.gain.value = 2.2;
+      master.connect(comp).connect(actx.destination);
+      musicBus = actx.createGain();
+      musicBus.gain.value = 0;
+      musicBus.connect(comp);
+      sceneBus = actx.createGain();
+      sceneBus.gain.value = 0.9;
+      sceneBus.connect(comp);
+      // Photorealistic sounds go through a short room reverb.
+      realBus = actx.createGain(); realBus.gain.value = 1.6; realBus.connect(comp);
+      const verb = actx.createConvolver(), wet = actx.createGain();
+      const len = Math.floor(actx.sampleRate * 1.1), ir = actx.createBuffer(2, len, actx.sampleRate);
+      for (let c = 0; c < 2; c++) {
+        const d = ir.getChannelData(c);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2);
+      }
+      verb.buffer = ir; wet.gain.value = 0.22;
+      realBus.connect(verb).connect(wet).connect(comp);
+      noiseBuf = actx.createBuffer(1, Math.floor(actx.sampleRate * 0.25), actx.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    } catch (e) { actx = null; }
+  }
+  function ready() {
+    if (!S.sound) return false;
+    initAudio();
+    if (!actx) return false;
+    if (actx.state === 'suspended') actx.resume();
+    return true;
+  }
+  // ---------- Music: four original tracks, each played twice, cycling ----------
+  const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+  const ch = (r, notes) => ({ r, ch: notes });
+  const TRACKS = [
+    { name: 'Calypso Pop', bpm: 132, swing: 0.3, lead: 'steel', leadVol: 0.16, double: true,
+      comp: { inst: 'mallet', pos: [1, 3, 5, 7], oct: 12, vol: 0.035 },
+      drums: { kick: [[0, 0.5], [4, 0.5], [3, 0.25]], snare: 'rim', hits: [2, 6], hat: 'all' },
+      bass: [[0, 0, 1.5], [3, 0, 1], [4, 7, 1.5], [6, 12, 1], [7, 7, 1]],
+      chords: [ch(41, [53, 57, 60]), ch(38, [50, 53, 57]), ch(34, [50, 53, 58]), ch(36, [52, 55, 60]),
+               ch(41, [53, 57, 60]), ch(38, [50, 53, 57]), ch(43, [50, 55, 58]), ch(36, [52, 55, 60])],
+      melody: [
+        [[0, 72, 1], [2, 69, 1], [3, 72, 1], [5, 77, 2], [7, 74, 1]],
+        [[0, 72, 1], [1, 74, 1], [2, 72, 1], [3, 69, 1], [4, 65, 2], [6, 69, 2]],
+        [[0, 70, 1], [2, 74, 1], [3, 77, 1], [5, 74, 1], [6, 70, 2]],
+        [[0, 72, 1], [1, 76, 1], [2, 79, 2], [4, 76, 1], [5, 72, 1], [6, 67, 2]],
+        [[0, 77, 1], [2, 76, 1], [3, 77, 1], [4, 81, 2], [6, 79, 1], [7, 77, 1]],
+        [[0, 74, 2], [2, 77, 1], [3, 74, 1], [4, 69, 2], [6, 72, 1], [7, 74, 1]],
+        [[0, 74, 1], [1, 70, 1], [2, 67, 1], [3, 70, 1], [4, 74, 1], [5, 77, 1], [6, 79, 2]],
+        [[0, 76, 1], [1, 74, 1], [2, 72, 2], [4, 67, 1], [5, 69, 1], [6, 70, 1], [7, 76, 1]],
+      ] },
+    { name: 'Monkey Lagoon', bpm: 108, swing: 0.15, lead: 'marimba', leadVol: 0.2,
+      comp: { inst: 'organ', pos: [1, 3, 5, 7], oct: 0, vol: 0.03 },
+      drums: { kick: [[4, 0.55], [0, 0.2]], snare: 'rim', hits: [4], hat: 'off' },
+      bass: [[0, 0, 2], [3, 7, 1], [4, 12, 1], [6, 7, 1.5]],
+      chords: [ch(43, [55, 59, 62]), ch(40, [52, 55, 59]), ch(36, [52, 55, 60]), ch(38, [50, 54, 57]),
+               ch(43, [55, 59, 62]), ch(40, [52, 55, 59]), ch(45, [52, 57, 60]), ch(38, [50, 54, 57])],
+      melody: [
+        [[0, 71, 1], [1, 74, 1], [2, 79, 2], [4, 78, 1], [5, 76, 1], [6, 74, 2]],
+        [[0, 71, 2], [2, 67, 1], [3, 71, 1], [4, 76, 2], [6, 74, 2]],
+        [[0, 72, 1], [1, 76, 1], [2, 79, 1], [3, 76, 1], [4, 72, 2], [6, 76, 1], [7, 74, 1]],
+        [[0, 74, 3], [3, 78, 1], [4, 81, 2], [6, 78, 2]],
+        [[0, 79, 1], [1, 78, 1], [2, 79, 1], [3, 74, 1], [4, 71, 2], [6, 67, 2]],
+        [[0, 67, 1], [1, 71, 1], [2, 76, 2], [4, 79, 1], [5, 76, 1], [6, 71, 2]],
+        [[0, 72, 1], [1, 76, 1], [2, 81, 2], [4, 79, 1], [5, 76, 1], [6, 72, 1], [7, 74, 1]],
+        [[0, 78, 2], [2, 74, 2], [4, 69, 1], [5, 72, 1], [6, 74, 1], [7, 78, 1]],
+      ] },
+    { name: 'Dart Parade', bpm: 140, swing: 0, lead: 'piano', leadVol: 0.12,
+      comp: { inst: 'piano', pos: [2, 6], oct: 0, vol: 0.05 },
+      drums: { kick: [[0, 0.5], [4, 0.5]], snare: 'snare', hits: [2, 6], hat: 'all' },
+      bass: [[0, 0, 2], [4, 7, 2]],
+      chords: [ch(36, [55, 60, 64]), ch(45, [57, 60, 64]), ch(41, [57, 60, 65]), ch(43, [55, 59, 62]),
+               ch(40, [56, 59, 64]), ch(45, [57, 60, 64]), ch(38, [54, 57, 62]), ch(43, [55, 59, 62])],
+      melody: [
+        [[0, 76, 1], [1, 79, 1], [2, 84, 2], [4, 79, 1], [5, 76, 1], [6, 72, 2]],
+        [[0, 72, 1], [1, 76, 1], [2, 81, 2], [4, 76, 1], [5, 72, 1], [6, 69, 2]],
+        [[0, 77, 1], [1, 81, 1], [2, 84, 1], [3, 81, 1], [4, 77, 2], [6, 72, 1], [7, 74, 1]],
+        [[0, 79, 3], [3, 77, 1], [4, 76, 1], [5, 74, 1], [6, 71, 2]],
+        [[0, 80, 1], [1, 83, 1], [2, 88, 2], [4, 83, 1], [5, 80, 1], [6, 76, 2]],
+        [[0, 81, 1], [1, 84, 1], [2, 81, 1], [3, 76, 1], [4, 72, 2], [6, 76, 2]],
+        [[0, 78, 1], [1, 81, 1], [2, 86, 2], [4, 81, 1], [5, 78, 1], [6, 74, 2]],
+        [[0, 79, 1], [1, 77, 1], [2, 76, 1], [3, 74, 1], [4, 71, 1], [5, 74, 1], [6, 79, 1], [7, 83, 1]],
+      ] },
+    { name: 'Sky High', bpm: 118, swing: 0.08, lead: 'pluck', leadVol: 0.09, pad: true,
+      drums: { kick: [[0, 0.55], [2, 0.55], [4, 0.55], [6, 0.55]], snare: 'clap', hits: [2, 6], hat: 'off' },
+      bass: [[0, 0, 1], [2, 0, 1], [4, 0, 1], [6, 0, 1], [7, 12, 1]],
+      chords: [ch(38, [57, 62, 66]), ch(45, [57, 61, 64]), ch(47, [59, 62, 66]), ch(43, [55, 59, 62]),
+               ch(38, [57, 62, 66]), ch(45, [57, 61, 64]), ch(43, [55, 59, 62]), ch(45, [57, 61, 64])],
+      melody: [
+        [[0, 78, 1], [2, 81, 1], [3, 78, 1], [4, 86, 2], [6, 85, 1], [7, 83, 1]],
+        [[0, 81, 2], [2, 76, 1], [3, 78, 1], [4, 81, 2], [6, 73, 2]],
+        [[0, 78, 1], [1, 81, 1], [2, 83, 2], [4, 86, 1], [5, 83, 1], [6, 81, 2]],
+        [[0, 79, 2], [2, 78, 1], [3, 76, 1], [4, 74, 2], [6, 76, 2]],
+        [[0, 86, 1], [1, 85, 1], [2, 86, 1], [3, 81, 1], [4, 78, 2], [6, 81, 1], [7, 83, 1]],
+        [[0, 85, 2], [2, 81, 2], [4, 76, 1], [5, 78, 1], [6, 81, 2]],
+        [[0, 83, 1], [1, 81, 1], [2, 79, 1], [3, 78, 1], [4, 79, 2], [6, 83, 2]],
+        [[0, 81, 3], [3, 76, 1], [4, 78, 1], [5, 81, 1], [6, 85, 1], [7, 88, 1]],
+      ] },
+  ];
+  const PASSES_PER_TRACK = 2;
+
+  function env(g, t, peak, dec) {
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+  }
+  function steel(t, m, dur, vol, dest = musicBus) {
+    const f = mtof(m), dec = 0.35 + dur * 0.6;
+    [[1, 1, dec], [2, 0.4, dec * 0.7], [3.01, 0.14, dec * 0.4], [4.2, 0.06, dec * 0.25]].forEach(([k, a, d]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.frequency.value = f * k;
+      env(g, t, vol * a, d);
+      o.connect(g).connect(dest); o.start(t); o.stop(t + d + 0.02);
+    });
+  }
+  function mallet(t, m, vol) { tone(t, mtof(m), vol, 0.14, 'triangle', musicBus); }
+  function marimba(t, m, dur, vol) {
+    const f = mtof(m);
+    tone(t, f, vol, 0.45, 'sine', musicBus); tone(t, f * 4, vol * 0.25, 0.08, 'sine', musicBus);
+  }
+  function piano(t, m, dur, vol) {
+    const f = mtof(m), dec = 0.5 + dur * 0.8;
+    tone(t, f, vol, dec, 'triangle', musicBus); tone(t, f * 2, vol * 0.3, dec * 0.6, 'sine', musicBus);
+    tone(t, f * 3, vol * 0.08, dec * 0.3, 'sine', musicBus);
+  }
+  function pluck(t, m, dur, vol) {
+    const o = actx.createOscillator(), lp = actx.createBiquadFilter(), g = actx.createGain();
+    o.type = 'sawtooth'; o.frequency.value = mtof(m);
+    lp.type = 'lowpass'; lp.Q.value = 4;
+    lp.frequency.setValueAtTime(3200, t); lp.frequency.exponentialRampToValueAtTime(700, t + 0.25);
+    const dec = 0.25 + dur * 0.6;
+    env(g, t, vol, dec);
+    o.connect(lp).connect(g).connect(musicBus); o.start(t); o.stop(t + dec + 0.02);
+  }
+  function organ(t, m, vol) { tone(t, mtof(m), vol, 0.12, 'square', musicBus); }
+  function padChord(t, notes, dur, vol) {
+    notes.forEach(m => [-8, 8].forEach(c => {
+      const o = actx.createOscillator(), lp = actx.createBiquadFilter(), g = actx.createGain();
+      o.type = 'sawtooth'; o.frequency.value = mtof(m); o.detune.value = c;
+      lp.type = 'lowpass'; lp.frequency.value = 1100;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.25);
+      g.gain.setValueAtTime(vol, t + dur - 0.1);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.3);
+      o.connect(lp).connect(g).connect(musicBus); o.start(t); o.stop(t + dur + 0.35);
+    }));
+  }
+  function bassNote(t, m, dur) {
+    const o = actx.createOscillator(), lp = actx.createBiquadFilter(), g = actx.createGain();
+    o.type = 'square'; o.frequency.value = mtof(m);
+    lp.type = 'lowpass'; lp.frequency.value = 520;
+    env(g, t, 0.22, dur);
+    o.connect(lp).connect(g).connect(musicBus); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function kick(t, v) {
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.1);
+    env(g, t, v, 0.15);
+    o.connect(g).connect(musicBus); o.start(t); o.stop(t + 0.17);
+  }
+  function noiseHit(t, type, freq, q, v, dec) {
+    const n = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+    n.buffer = noiseBuf; f.type = type; f.frequency.value = freq; f.Q.value = q;
+    env(g, t, v, dec);
+    n.connect(f).connect(g).connect(musicBus); n.start(t, Math.random() * 0.15); n.stop(t + dec + 0.02);
+  }
+  const LEADS = { steel: (t, m, d, v) => steel(t, m, d, v), marimba, piano, pluck };
+
+  function scheduleStep(tr, i, t, pass) {
+    const bar = i >> 3, pos = i & 7, c = tr.chords[bar], E8 = 60 / tr.bpm / 2, dr = tr.drums;
+    dr.kick.forEach(([p, v]) => { if (p === pos) kick(t, v); });
+    if (dr.hits.includes(pos)) {
+      if (dr.snare === 'rim') noiseHit(t, 'bandpass', 2300, 3, 0.35, 0.06);
+      else if (dr.snare === 'snare') { noiseHit(t, 'highpass', 1200, 0.7, 0.3, 0.14); tone(t, 190, 0.15, 0.07, 'triangle', musicBus); }
+      else [0, 0.012, 0.024].forEach(o => noiseHit(t + o, 'bandpass', 1500, 0.9, 0.28, 0.09));
+    }
+    if (dr.hat === 'all') noiseHit(t, 'highpass', 7000, 0.7, pos & 1 ? 0.07 : 0.035, 0.04);
+    else if (pos & 1) noiseHit(t, 'highpass', 7000, 0.7, 0.08, 0.06);
+    tr.bass.forEach(([p, iv, len]) => { if (p === pos) bassNote(t, c.r + iv, len * E8 * 0.9); });
+    if (tr.comp && tr.comp.pos.includes(pos)) c.ch.forEach(m => {
+      const n = m + tr.comp.oct;
+      if (tr.comp.inst === 'mallet') mallet(t, n, tr.comp.vol);
+      else if (tr.comp.inst === 'organ') organ(t, n, tr.comp.vol);
+      else piano(t, n, E8, tr.comp.vol);
+    });
+    if (tr.pad && pos === 0) padChord(t, c.ch, E8 * 8, 0.022);
+    tr.melody[bar].forEach(([p, m, len]) => {
+      if (p !== pos) return;
+      LEADS[tr.lead](t, m, len * E8, tr.leadVol);
+      if (tr.double && pass % 2) steel(t, m - 12, len * E8, 0.07);
+    });
+  }
+
+  // Notes are scheduled 0.6s ahead so a busy frame or a throttled timer never leaves a gap in the loop.
+  let musicOn = false, musicTimer = 0, nextT = 0, stepI = 0, passN = 0, trackI = 0;
+  function showTrack() { const el = $('trackName'); if (el) el.textContent = TRACKS[trackI].name; }
+  function tickMusic() {
+    const now = actx.currentTime;
+    if (now > nextT + 0.5) nextT = now + 0.05;
+    while (nextT < now + 0.6) {
+      const tr = TRACKS[trackI], E8 = 60 / tr.bpm / 2;
+      scheduleStep(tr, stepI, nextT + (stepI & 1 ? E8 * tr.swing : 0), passN);
+      nextT += E8;
+      if (++stepI === tr.chords.length * 8) {
+        stepI = 0;
+        if (++passN >= PASSES_PER_TRACK) { passN = 0; trackI = (trackI + 1) % TRACKS.length; showTrack(); }
+      }
+    }
+  }
+  function startMusic() {
+    if (musicOn || !S.music || document.hidden || !$('ascent').hidden) return;
+    initAudio();
+    if (!actx) return;
+    if (actx.state === 'suspended') actx.resume();
+    musicOn = true; stepI = 0; passN = 0;
+    const now = actx.currentTime;
+    nextT = now + 0.1;
+    musicBus.gain.cancelScheduledValues(now);
+    musicBus.gain.setTargetAtTime(0.6, now, 0.3);
+    tickMusic();
+    musicTimer = setInterval(tickMusic, 50);
+  }
+  function stopMusic() {
+    if (!musicOn) return;
+    musicOn = false; clearInterval(musicTimer);
+    musicBus.gain.cancelScheduledValues(actx.currentTime);
+    musicBus.gain.setTargetAtTime(0, actx.currentTime, 0.05);
+  }
+  function nextTrack() {
+    trackI = (trackI + 1) % TRACKS.length; stepI = 0; passN = 0; showTrack();
+    if (!musicOn) return;
+    const now = actx.currentTime;
+    musicBus.gain.cancelScheduledValues(now);
+    musicBus.gain.setTargetAtTime(0, now, 0.03);
+    musicBus.gain.setTargetAtTime(0.6, now + 0.65, 0.1);
+    nextT = now + 0.7;
+  }
+  document.addEventListener('pointerdown', () => { if (S && S.music) startMusic(); }, true);
+  document.addEventListener('keydown', () => { if (S && S.music) startMusic(); }, true);
+
+  function tone(t, freq, vol, dec, type = 'sine', dest = master) {
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.value = freq;
+    env(g, t, vol, dec);
+    o.connect(g).connect(dest); o.start(t); o.stop(t + dec + 0.02);
+    return o;
+  }
+  function noiseSrc(t, dur, rate = 1) {
+    const n = actx.createBufferSource(); n.buffer = noiseBuf; n.loop = true; n.playbackRate.value = rate;
+    n.start(t, Math.random() * 0.2); n.stop(t + dur);
+    return n;
+  }
+  // The shared crack-and-thump core of every pop.
+  function popCore(P, vol, t) {
+    const crack = at => {
+      const bp = actx.createBiquadFilter(); bp.type = 'bandpass';
+      bp.frequency.value = P.bp * (0.85 + Math.random() * 0.3); bp.Q.value = P.q;
+      const ng = actx.createGain();
+      ng.gain.setValueAtTime(0, at);
+      ng.gain.linearRampToValueAtTime(P.ng * vol, at + 0.001);
+      ng.gain.exponentialRampToValueAtTime(0.001, at + P.nd);
+      noiseSrc(at, P.nd + 0.03, 0.9 + Math.random() * 0.2).connect(bp).connect(ng).connect(master);
+    };
+    crack(t);
+    if (P.extra === 'snap') crack(t + 0.05);
+    const o = actx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(P.f0, t);
+    o.frequency.exponentialRampToValueAtTime(P.f1, t + P.td * 0.65);
+    const og = actx.createGain();
+    og.gain.setValueAtTime(0, t);
+    og.gain.linearRampToValueAtTime(P.tg * vol, t + 0.002);
+    og.gain.exponentialRampToValueAtTime(0.001, t + P.td);
+    o.connect(og).connect(master);
+    o.start(t); o.stop(t + P.td + 0.02);
+  }
+  function playPop(vol = 1, ci = S.look) {
+    if (!ready()) return;
+    if (S.opt.real) { realPop(vol, ci); return; }
+    const P = POP_SOUNDS[ci], t = actx.currentTime, v = vol * 0.3;
+    popCore(P, vol, t);
+    if (P.extra === 'squeak') {
+      const s = tone(t, 900, v, 0.08, 'square');
+      s.frequency.exponentialRampToValueAtTime(2400, t + 0.06);
+    } else if (P.extra === 'bloop') {
+      const s = tone(t + 0.01, 220, v * 2, 0.12);
+      s.frequency.exponentialRampToValueAtTime(880, t + 0.1);
+    } else if (P.extra === 'sparkle') {
+      [88, 93, 96, 100].forEach((m, i) => tone(t + 0.03 + i * 0.04, mtof(m), v, 0.3));
+    } else if (P.extra === 'coin') {
+      tone(t + 0.02, 1976, v, 0.08, 'square');
+      tone(t + 0.08, 2637, v, 0.4, 'square');
+    } else if (P.extra === 'arp') {
+      [72, 76, 79, 84, 88].forEach((m, i) => tone(t + 0.02 + i * 0.035, mtof(m), v, 0.25, 'triangle'));
+    }
+  }
+  // Needle upgrade: a metallic shing, then a pop that gets sharper with each tier.
+  function needlePop(i) {
+    if (!ready()) return;
+    if (S.opt.real) { realTing(i); return; }
+    const t = actx.currentTime;
+    const s = tone(t, 2600 + i * 220, 0.14, 0.18, 'triangle');
+    s.frequency.exponentialRampToValueAtTime(1500 + i * 150, t + 0.15);
+    tone(t + 0.01, 3900 + i * 300, 0.06, 0.3);
+    popCore({ bp: 900 + i * 280, q: 1.1, nd: 0.08, ng: 1.7, f0: 170 + i * 35, f1: 50, td: 0.13, tg: 1.3 }, 1, t + 0.08);
+  }
+  // Colour change: a fluttering, falling squeal of escaping air, then a quick refill.
+  function deflateSound() {
+    if (!ready()) return;
+    if (S.opt.real) { realDeflate(); return; }
+    const t = actx.currentTime;
+    const o = actx.createOscillator(), lfo = actx.createOscillator(), lg = actx.createGain();
+    const bp = actx.createBiquadFilter(), g = actx.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(560, t); o.frequency.exponentialRampToValueAtTime(150, t + 0.85);
+    lfo.frequency.value = 18; lg.gain.value = 45; lfo.connect(lg).connect(o.frequency);
+    bp.type = 'bandpass'; bp.frequency.value = 1100; bp.Q.value = 1.2;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.04);
+    g.gain.setValueAtTime(0.5, t + 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+    o.connect(bp).connect(g).connect(master);
+    o.start(t); lfo.start(t); o.stop(t + 0.92); lfo.stop(t + 0.92);
+    const hp = actx.createBiquadFilter(), hg = actx.createGain();
+    hp.type = 'highpass'; hp.frequency.value = 2500;
+    env(hg, t, 0.15, 0.85);
+    noiseSrc(t, 0.9).connect(hp).connect(hg).connect(master);
+  }
+  function inflateSound() {
+    if (!ready()) return;
+    if (S.opt.real) { realInflate(); return; }
+    const t = actx.currentTime, o = tone(t, 180, 0.25, 0.35);
+    o.frequency.exponentialRampToValueAtTime(520, t + 0.3);
+  }
+  function swish(t, vol) {
+    const bp = actx.createBiquadFilter(), g = actx.createGain();
+    bp.type = 'bandpass'; bp.Q.value = 1.5;
+    bp.frequency.setValueAtTime(500, t);
+    bp.frequency.exponentialRampToValueAtTime(3500, t + 0.12);
+    bp.frequency.exponentialRampToValueAtTime(900, t + 0.28);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.1);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+    noiseSrc(t, 0.32).connect(bp).connect(g).connect(master);
+  }
+  // Hat on: a swipe through the air and a soft pat as it lands.
+  function hatSwipe() {
+    if (!ready()) return;
+    if (S.opt.real) { realHat(); return; }
+    const t = actx.currentTime;
+    swish(t, 0.6);
+    const o = tone(t + 0.22, 170, 0.35, 0.09);
+    o.frequency.exponentialRampToValueAtTime(80, t + 0.3);
+  }
+  const FORMANTS = { oo: [320, 800], ah: [800, 1200], ee: [300, 2300], oh: [500, 900] };
+  function monkeyCall(id, vol = 0.8) {
+    if (!ready()) return;
+    if (S.opt.real) { realMonkey(id, vol); return; }
+    const V = VOICES[id];
+    let t = actx.currentTime + 0.01;
+    const start = t;
+    V.syl.forEach(([p0, p1, dur, vowel, gap = 0.04]) => {
+      const o = actx.createOscillator(), lfo = actx.createOscillator(), lg = actx.createGain(), g = actx.createGain();
+      o.type = V.type || 'sawtooth';
+      o.frequency.setValueAtTime(V.base * p0, t);
+      o.frequency.exponentialRampToValueAtTime(V.base * p1, t + dur);
+      lfo.frequency.value = V.vib || 7; lg.gain.value = V.base * 0.03;
+      lfo.connect(lg).connect(o.frequency);
+      FORMANTS[vowel].forEach((f, i) => {
+        const bp = actx.createBiquadFilter(), fg = actx.createGain();
+        bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = 5; fg.gain.value = i ? 0.6 : 1;
+        o.connect(bp).connect(fg).connect(g);
+      });
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol * 2.5, t + 0.02);
+      g.gain.setValueAtTime(vol * 2.5, t + dur * 0.7);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      g.connect(master);
+      o.start(t); lfo.start(t); o.stop(t + dur + 0.02); lfo.stop(t + dur + 0.02);
+      t += dur + gap;
+    });
+    if (V.extra === 'swish') swish(start, vol * 0.6);
+    if (V.extra === 'beep') { tone(t + 0.02, 1320, vol * 0.2, 0.1, 'square'); tone(t + 0.14, 1760, vol * 0.2, 0.12, 'square'); }
+  }
+
+  // ---------- Photorealistic sound effects: noise-based, no tonal sweeps, with room echo ----------
+  function envTo(g, t, peak, attack, dec) {
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(peak, t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + dec);
+  }
+  function filtered(t, dur, type, freq, q, rate = 1) {
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    noiseSrc(t, dur, rate).connect(f);
+    return f;
+  }
+  function realPop(vol, ci = S.look, t = actx.currentTime + 0.001) {
+    const size = 0.85 + (ci % 5) * 0.06;
+    const crack = actx.createGain(); envTo(crack, t, vol * 1.7, 0.0006, 0.028 + (ci % 3) * 0.004);
+    filtered(t, 0.06, 'highpass', 420 * size, 0.5).connect(crack).connect(realBus);
+    const body = actx.createGain(); envTo(body, t, vol * 1.3, 0.002, 0.11);
+    filtered(t, 0.14, 'lowpass', 320 / size, 0.7).connect(body).connect(realBus);
+    const flap = actx.createGain(); envTo(flap, t + 0.01, vol * 0.35, 0.004, 0.16);
+    filtered(t + 0.01, 0.2, 'bandpass', 700 * size, 3).connect(flap).connect(realBus);
+  }
+  function realTing(i) {
+    const t = actx.currentTime + 0.01, f = 2200 + i * 140;
+    [[1, 0.1, 1.4], [2.76, 0.05, 0.8], [5.4, 0.025, 0.45], [8.93, 0.012, 0.25]].forEach(([k, v, d]) => tone(t, f * k, v, d, 'sine', realBus));
+    const scrape = actx.createGain(); envTo(scrape, t, 0.15, 0.003, 0.08);
+    filtered(t, 0.1, 'bandpass', 5000, 1).connect(scrape).connect(realBus);
+    realPop(0.9, S.look, t + 0.12);
+  }
+  function amFlutter(t, dur, rate, depth) {
+    const g = actx.createGain(), lfo = actx.createOscillator(), lg = actx.createGain();
+    g.gain.value = 1 - depth; lfo.frequency.value = rate; lg.gain.value = depth;
+    lfo.connect(lg).connect(g.gain); lfo.start(t); lfo.stop(t + dur);
+    return g;
+  }
+  function realDeflate() {
+    const t = actx.currentTime + 0.01;
+    const f = filtered(t, 1.05, 'bandpass', 1800, 10);
+    f.frequency.setValueAtTime(1800, t); f.frequency.exponentialRampToValueAtTime(450, t + 0.95);
+    const am = amFlutter(t, 1.05, 24, 0.45), g = actx.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(1.1, t + 0.05);
+    g.gain.setValueAtTime(1.1, t + 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.0);
+    f.connect(am).connect(g).connect(realBus);
+    const o = actx.createOscillator(), lp = actx.createBiquadFilter(), og = actx.createGain(), am2 = amFlutter(t, 1.05, 24, 0.6);
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(70, t + 0.95);
+    lp.type = 'lowpass'; lp.frequency.value = 500;
+    og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.12, t + 0.05); og.gain.exponentialRampToValueAtTime(0.0001, t + 1.0);
+    o.connect(lp).connect(am2).connect(og).connect(realBus); o.start(t); o.stop(t + 1.05);
+  }
+  function realInflate() {
+    const t = actx.currentTime + 0.01, f = filtered(t, 0.5, 'bandpass', 500, 2), g = actx.createGain();
+    f.frequency.setValueAtTime(500, t); f.frequency.exponentialRampToValueAtTime(1400, t + 0.4);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.4, t + 0.15); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+    f.connect(g).connect(realBus);
+  }
+  function realSwish(t, vol) {
+    const lp = filtered(t, 0.36, 'lowpass', 4000, 0.5), bp = actx.createBiquadFilter(), g = actx.createGain();
+    bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = 0.6;
+    g.gain.setValueAtTime(0, t);
+    for (let u = 0; u < 0.3; u += 0.012) g.gain.setValueAtTime(vol * (0.3 + Math.random() * 0.7) * Math.sin(Math.PI * u / 0.3), t + u);
+    g.gain.setValueAtTime(0, t + 0.32);
+    lp.connect(bp).connect(g).connect(realBus);
+  }
+  function realHat() {
+    const t = actx.currentTime + 0.01;
+    realSwish(t, 0.6);
+    const pat = actx.createGain(); envTo(pat, t + 0.26, 0.8, 0.003, 0.08);
+    filtered(t + 0.26, 0.1, 'lowpass', 250, 0.7).connect(pat).connect(realBus);
+  }
+  // A breathy, jittery primate call: sawtooth plus noise through three formants.
+  function realMonkey(id, vol) {
+    const V = VOICES[id], base = V.base * 1.25, F3 = 2800;
+    let t = actx.currentTime + 0.01;
+    const start = t;
+    V.syl.forEach(([p0, p1, dur, vowel, gap = 0.04]) => {
+      const o = actx.createOscillator(), mix = actx.createGain(), g = actx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(base * p0, t);
+      for (let u = 0.03; u < dur; u += 0.03) {
+        const f = base * (p0 + (p1 - p0) * u / dur) * (1 + (Math.random() - 0.5) * 0.1);
+        o.frequency.linearRampToValueAtTime(f, t + u);
+      }
+      o.frequency.linearRampToValueAtTime(base * p1, t + dur);
+      o.connect(mix);
+      const breath = actx.createGain(); breath.gain.value = 0.35;
+      noiseSrc(t, dur + 0.02).connect(breath).connect(mix);
+      [...FORMANTS[vowel], F3].forEach((f, i) => {
+        const bp = actx.createBiquadFilter(), fg = actx.createGain();
+        bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = 7; fg.gain.value = [1, 0.7, 0.3][i];
+        mix.connect(bp).connect(fg).connect(g);
+      });
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol * 3, t + 0.015);
+      g.gain.setValueAtTime(vol * 3, t + dur * 0.65);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      g.connect(realBus);
+      o.start(t); o.stop(t + dur + 0.02);
+      const inhale = actx.createGain(); envTo(inhale, t + dur, vol * 0.08, 0.01, gap + 0.02);
+      filtered(t + dur, gap + 0.03, 'bandpass', 1500, 1).connect(inhale).connect(realBus);
+      t += dur + gap;
+    });
+    if (V.extra === 'swish') realSwish(start, vol * 0.6);
+    if (V.extra === 'beep') { tone(t + 0.02, 1320, vol * 0.15, 0.1, 'sine', realBus); tone(t + 0.14, 1760, vol * 0.15, 0.12, 'sine', realBus); }
+  }
+
+  // ---------- FX ----------
+  let parts = [];
+  const back = $('back'), bx = back.getContext('2d');
+  function resize() {
+    const r = devicePixelRatio || 1;
+    [[canvas, cx], [back, bx]].forEach(([c, x]) => {
+      c.width = innerWidth * r; c.height = innerHeight * r;
+      c.style.width = innerWidth + 'px'; c.style.height = innerHeight + 'px';
+      x.setTransform(r, 0, 0, r, 0, 0);
+      x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+    });
+    sizeBalloon(); resize3D();
+  }
+  // The balloon fills most of the stage, so the monkeys around it can be drawn large.
+  function sizeBalloon() {
+    const h = stage.clientHeight, w = stage.clientWidth;
+    const byHeight = h * 0.94, byWidth = w * 0.55 * 342 / 200;
+    balloon.querySelector('svg').style.height = Math.max(160, Math.min(byHeight, byWidth, 640)) + 'px';
+  }
+  addEventListener('resize', resize);
+  function burst(x, y, count = 12) {
+    if (reduceMotion) return;
+    const col = COLOURS[S.look];
+    const rainbow = ['#ff4d5a', '#ff9f2e', '#ffe03a', '#3ccf6e', '#3a8cff', '#9b4dff'];
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2, s = 3 + Math.random() * 7;
+      parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 2, r: Math.random() * 3, vr: (Math.random() - 0.5) * 0.5,
+        w: 5 + Math.random() * 9, h: 4 + Math.random() * 5, life: 1,
+        col: col.rainbow ? rainbow[i % 6] : col.c[1 + (i % 2)] });
+    }
+    if (parts.length > 400) parts.splice(0, parts.length - 400);
+  }
+  function drawParts() {
+    parts = parts.filter(p => p.life > 0);
+    for (const p of parts) {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.45; p.vx *= 0.97; p.r += p.vr; p.life -= 0.03;
+      cx.save(); cx.globalAlpha = Math.max(p.life, 0); cx.translate(p.x, p.y); cx.rotate(p.r);
+      cx.fillStyle = p.col; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); cx.restore();
+    }
+  }
+  // Monkeys: orbiters circle the balloon (behind it on the far side), throwers stand around it and throw darts.
+  const crewState = {};
+  let darts = [], monkeySpots = [], lastAutoSound = 0, nextCall = 0;
+  function autoPop(vol) {
+    const now = performance.now();
+    if (now - lastAutoSound < 90) return;
+    lastAutoSound = now; playPop(vol);
+  }
+  // Draws a monkey centred on (x, y), facing the balloon, with the current needle in its paw aimed at (tx, ty).
+  // Returns the needle tip and the throwing paw in screen space.
+  // face: 1 faces right, -1 faces left; values in between squash the monkey as it turns.
+  function drawMonkey(ctx, id, x, y, size, face, tx, ty, gold) {
+    const mode = S.opt.style, rig = RIG[mode], k = size / 64, sx = face;
+    const [vx, vy, W, H] = rig.vb, [ax, ay] = rig.anchor;
+    const entry = MONKEY_IMG[id];
+    if (entry && entry.mode === mode) {
+      ctx.save(); ctx.translate(x, y); ctx.scale(sx, 1);
+      ctx.drawImage(entry.c, (vx - ax) * k, (vy - ay) * k, W * k, H * k);
+      ctx.restore();
+    }
+    const px = x + sx * (rig.paw[0] - ax) * k, py = y + (rig.paw[1] - ay) * k;
+    const aim = Math.atan2(ty - py, tx - px), kn = k * 0.8, grip = 44;
+    if (NEEDLE_HOLD) {
+      ctx.save(); ctx.translate(px, py); ctx.rotate(aim + Math.PI);
+      if (gold) { ctx.shadowColor = '#ffd84a'; ctx.shadowBlur = 8; }
+      ctx.drawImage(NEEDLE_HOLD, -grip * kn, -7 * kn, 68 * kn, 14 * kn);
+      ctx.restore();
+    }
+    return {
+      tipX: px + Math.cos(aim) * grip * kn, tipY: py + Math.sin(aim) * grip * kn,
+      throwX: x + sx * (rig.throwPaw[0] - ax) * k, throwY: y + (rig.throwPaw[1] - ay) * k,
+    };
+  }
+  function drawDart(d, x, y, ang) {
+    cx.save(); cx.translate(x, y); cx.rotate(ang);
+    if (d.laser) {
+      cx.shadowColor = '#6ff3ff'; cx.shadowBlur = 10; cx.strokeStyle = '#b8fbff'; cx.lineWidth = 3; cx.lineCap = 'round';
+      cx.beginPath(); cx.moveTo(-18, 0); cx.lineTo(8, 0); cx.stroke();
+    } else {
+      cx.strokeStyle = d.gold ? '#c99400' : '#6b4a2a'; cx.lineWidth = 2.2;
+      cx.beginPath(); cx.moveTo(-12, 0); cx.lineTo(5, 0); cx.stroke();
+      cx.fillStyle = d.gold ? '#fff0a0' : '#c9ced8'; cx.beginPath(); cx.moveTo(5, -2.5); cx.lineTo(12, 0); cx.lineTo(5, 2.5); cx.fill();
+      cx.fillStyle = d.gold ? '#f5c518' : '#e8323c'; cx.beginPath(); cx.moveTo(-14, -5); cx.lineTo(-8, 0); cx.lineTo(-14, 5); cx.fill();
+    }
+    cx.restore();
+  }
+  // ---------- 3D sitting monkeys (three.js), used for full-body cartoon mode ----------
+  const T = window.THREE;
+  let R3 = null;
+  function init3D() {
+    if (R3 || !T) return;
+    try {
+      const cv = document.createElement('canvas'); cv.id = 'm3d'; document.body.appendChild(cv);
+      const renderer = new T.WebGLRenderer({ canvas: cv, alpha: true, antialias: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+      renderer.outputEncoding = T.sRGBEncoding;
+      const scene = new T.Scene(), camera = new T.OrthographicCamera(0, 1, 0, -1, 1, 6000);
+      camera.position.z = 3000;
+      scene.add(new T.HemisphereLight(0xffffff, 0x40385a, 0.75));
+      const key = new T.DirectionalLight(0xffffff, 0.95); key.position.set(-0.6, 0.9, 1); scene.add(key);
+      const rim = new T.DirectionalLight(0xffe6c8, 0.45); rim.position.set(0.9, 0.2, -0.8); scene.add(rim);
+      // An invisible copy of the balloon writes depth only, so monkeys behind it are hidden pixel-perfectly.
+      const occ = new T.Mesh(new T.SphereGeometry(1, 48, 32), new T.MeshBasicMaterial({ colorWrite: false }));
+      occ.renderOrder = -1; scene.add(occ);
+      const mats = {
+        fur: new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.78, metalness: 0, side: T.DoubleSide }),
+        metal: new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.3, metalness: 0.55 }),
+        glass: new T.MeshStandardMaterial({ color: 0xcfeaff, transparent: true, opacity: 0.28, roughness: 0.05, metalness: 0.2, depthWrite: false }),
+      };
+      R3 = { renderer, scene, camera, cv, occ, mats, pool: new Map(), tpl: new Map(), frame: 0 };
+      resize3D();
+    } catch (e) { R3 = null; }
+  }
+  function resize3D() {
+    if (!R3) return;
+    R3.renderer.setSize(innerWidth, innerHeight);
+    Object.assign(R3.camera, { left: 0, right: innerWidth, top: 0, bottom: -innerHeight });
+    R3.camera.updateProjectionMatrix();
+  }
+  function reset3D() {
+    if (!R3) return;
+    R3.pool.forEach(o => R3.scene.remove(o)); R3.pool.clear();
+    R3.tpl.forEach(t => t.geos.forEach(g => g.dispose())); R3.tpl.clear();
+  }
+  const linCol = hex => { const c = new T.Color(hex); c.convertSRGBToLinear(); return c; };
+  function prep(geo, color, pos, rot, scl) {
+    const g = geo.index ? geo.toNonIndexed() : geo;
+    if (g !== geo) geo.dispose();
+    if (g.attributes.uv) g.deleteAttribute('uv');
+    g.applyMatrix4(new T.Matrix4().compose(new T.Vector3(...pos), new T.Quaternion().setFromEuler(new T.Euler(...(rot || [0, 0, 0]))),
+      new T.Vector3(...(scl || [1, 1, 1]))));
+    const c = linCol(color), n = g.attributes.position.count, a = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { a[i * 3] = c.r; a[i * 3 + 1] = c.g; a[i * 3 + 2] = c.b; }
+    g.setAttribute('color', new T.BufferAttribute(a, 3));
+    return g;
+  }
+  function mergeGeos(list) {
+    const n = list.reduce((t, g) => t + g.attributes.position.count, 0), out = new T.BufferGeometry();
+    const P = new Float32Array(n * 3), N = new Float32Array(n * 3), C = new Float32Array(n * 3);
+    let o = 0;
+    list.forEach(g => {
+      P.set(g.attributes.position.array, o * 3); N.set(g.attributes.normal.array, o * 3); C.set(g.attributes.color.array, o * 3);
+      o += g.attributes.position.count; g.dispose();
+    });
+    out.setAttribute('position', new T.BufferAttribute(P, 3)); out.setAttribute('normal', new T.BufferAttribute(N, 3));
+    out.setAttribute('color', new T.BufferAttribute(C, 3)); out.computeBoundingSphere();
+    return out;
+  }
+  const sph = (r, w = 18, h = 12) => new T.SphereGeometry(r, w, h);
+  const cap = (r, frac) => new T.SphereGeometry(r, 28, 14, 0, Math.PI * 2, 0, Math.PI * frac);
+  const cyl = (rt, rb, h, seg = 24, open = false) => new T.CylinderGeometry(rt, rb, h, seg, 1, open);
+  // A limb is a tapered cylinder with rounded joints at both ends, so there are never gaps at the elbows or hips.
+  function limb(list, a, b, r, color) {
+    const A = new T.Vector3(...a), B = new T.Vector3(...b), d = B.clone().sub(A), len = d.length();
+    const e = new T.Euler().setFromQuaternion(new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 1, 0), d.normalize()));
+    list.push(prep(cyl(r * 0.92, r, len, 14, true), color, A.clone().add(B).multiplyScalar(0.5).toArray(), [e.x, e.y, e.z]));
+    list.push(prep(sph(r, 14, 10), color, a));
+    list.push(prep(sph(r * 0.92, 14, 10), color, b));
+  }
+  function hat3D(list, id, H, r) {
+    const add = (geo, c, o, rot, scl) => list.push(prep(geo, c, [H[0] + o[0], H[1] + o[1], H[2] + o[2]], rot, scl));
+    const hx = Math.PI / 2;
+    if (id === 'party') {
+      add(new T.ConeGeometry(0.13, 0.36, 24), '#2f7fe8', [0, r + 0.15, 0]); add(sph(0.05), '#ec4fa8', [0, r + 0.34, 0]);
+      add(sph(0.022), '#ffd43b', [0.06, r + 0.1, 0.09]); add(sph(0.022), '#ffd43b', [-0.07, r + 0.04, 0.08]); add(sph(0.02), '#fff', [0.02, r + 0.2, 0.06]);
+    } else if (id === 'banana') {
+      add(new T.TorusGeometry(0.2, 0.05, 10, 24, Math.PI * 0.85), '#f5d02a', [-0.03, r - 0.13, 0], [0, 0, 0.3]);
+    } else if (id === 'fez') {
+      add(cyl(0.13, 0.17, 0.2), '#c8202a', [0, r + 0.05, 0]); add(cyl(0.13, 0.13, 0.012), '#a3141f', [0, r + 0.155, 0]);
+      add(cyl(0.006, 0.006, 0.17, 6), '#f5c518', [0.08, r + 0.1, 0.02], [0, 0, 1.1]); add(sph(0.032), '#f5c518', [0.15, r + 0.03, 0.03]);
+    } else if (id === 'beanie') {
+      add(cap(0.315, 0.45), '#2fb85a', [0, 0.01, 0]); add(new T.TorusGeometry(0.285, 0.045, 10, 32), '#1f8f45', [0, 0.1, 0], [hx, 0, 0]);
+      add(sph(0.08), '#eef7f0', [0, r + 0.06, 0]);
+    } else if (id === 'chef') {
+      add(cyl(0.2, 0.19, 0.15), '#ffffff', [0, r + 0.02, 0]); add(sph(0.2), '#ffffff', [0, r + 0.16, 0], 0, [1.25, 0.75, 1.25]);
+      add(sph(0.12), '#ffffff', [0.13, r + 0.19, 0]); add(sph(0.12), '#ffffff', [-0.13, r + 0.19, 0]);
+    } else if (id === 'cowboy') {
+      add(cyl(0.17, 0.21, 0.22), '#a86d36', [0, r + 0.07, 0]); add(cyl(0.215, 0.215, 0.045), '#4a2e14', [0, r - 0.01, 0]);
+      add(cyl(0.46, 0.46, 0.025, 40), '#8a5a2b', [0, r - 0.05, 0], 0, [1, 1, 0.85]);
+    } else if (id === 'pirate') {
+      add(sph(0.28), '#1c1f2b', [0, r - 0.03, 0], 0, [1.5, 0.45, 1.05]); add(cyl(0.19, 0.24, 0.17), '#1c1f2b', [0, r + 0.05, 0]);
+      add(sph(0.045), '#f2eee4', [0, r + 0.07, 0.22]);
+    } else if (id === 'headphones') {
+      add(new T.TorusGeometry(0.33, 0.025, 8, 32, Math.PI), '#3a3f52', [0, 0.02, 0]);
+      for (const sd of [-1, 1]) add(cyl(0.09, 0.09, 0.08, 20), '#2fb3c9', [sd * 0.32, 0, 0], [0, 0, hx]);
+    } else if (id === 'viking') {
+      add(cap(0.32, 0.47), '#9aa3b5', [0, 0, 0]); add(new T.TorusGeometry(0.3, 0.03, 8, 32), '#6b7488', [0, 0.05, 0], [hx, 0, 0]);
+      for (const sd of [-1, 1]) add(new T.ConeGeometry(0.055, 0.28, 12), '#f2eee4', [sd * 0.34, r - 0.02, 0], [0, 0, -sd * 0.75]);
+    } else if (id === 'hardhat') {
+      add(cap(0.33, 0.46), '#f5c518', [0, 0, 0]); add(cyl(0.37, 0.38, 0.02, 32), '#f5c518', [0, 0.07, 0.05]);
+    } else if (id === 'wizard') {
+      add(new T.ConeGeometry(0.26, 0.66, 24), '#3b2a8f', [0, r + 0.3, 0], [0, 0, 0.12]); add(cyl(0.25, 0.26, 0.05), '#f5c518', [0, r + 0.02, 0]);
+      add(cyl(0.4, 0.4, 0.025, 32), '#2a1d6b', [0, r - 0.02, 0]);
+    } else if (id === 'sombrero') {
+      add(cyl(0.1, 0.2, 0.3), '#e3c27a', [0, r + 0.12, 0]); add(cyl(0.19, 0.2, 0.05), '#2fb85a', [0, r + 0.02, 0]);
+      add(cyl(0.56, 0.56, 0.025, 40), '#e3c27a', [0, r - 0.03, 0]); add(new T.TorusGeometry(0.56, 0.018, 6, 40), '#c8202a', [0, r - 0.03, 0], [hx, 0, 0]);
+    } else if (id === 'beret') {
+      add(sph(0.3), '#7a1a3a', [0.04, r - 0.03, 0], [0, 0, -0.2], [1.15, 0.32, 1.1]); add(cyl(0.012, 0.012, 0.06, 6), '#4a0d22', [0.02, r + 0.07, 0]);
+    } else if (id === 'crown') {
+      add(cyl(0.2, 0.2, 0.13, 24, true), '#f5c518', [0, r + 0.02, 0]); add(sph(0.03), '#e8323c', [0, r + 0.02, 0.2]);
+      for (let k = 0; k < 6; k++) add(new T.ConeGeometry(0.035, 0.1, 8), '#f5c518', [Math.cos(k * Math.PI / 3) * 0.2, r + 0.13, Math.sin(k * Math.PI / 3) * 0.2]);
+    } else if (id === 'tophat') {
+      add(cyl(0.17, 0.17, 0.36), '#1c1f2b', [0, r + 0.16, 0]); add(cyl(0.175, 0.175, 0.06), '#e8323c', [0, r + 0.04, 0]);
+      add(cyl(0.3, 0.3, 0.02, 32), '#1c1f2b', [0, r - 0.02, 0]);
+    }
+  }
+  // The held needle lies along +z: tail at z=0, tip at z=len.
+  function needle3D(ni, gold) {
+    const n = NEEDLES[ni], L = [], steel = gold ? '#f5c518' : n.metal[1], hx = Math.PI / 2;
+    const rod = (r1, r2, len, c, z) => L.push(prep(cyl(r1, r2, len, 10), c, [0, 0, z + len / 2], [hx, 0, 0]));
+    const tipc = (r, len, c, z) => L.push(prep(new T.ConeGeometry(r, len, 10), c, [0, 0, z + len / 2], [hx, 0, 0]));
+    let len = 0.6;
+    if (n.kind === 'pin') { rod(0.011, 0.011, 0.47, steel, 0.03); tipc(0.011, 0.07, steel, 0.5); L.push(prep(sph(0.045), n.hc, [0, 0, 0])); len = 0.57; }
+    else if (n.kind === 'knit') { rod(0.028, 0.028, 0.5, n.hc, 0); tipc(0.028, 0.09, n.hc, 0.5); L.push(prep(sph(0.05), n.hc, [0, 0, 0])); len = 0.59; }
+    else if (n.kind === 'spine') { tipc(0.032, 0.6, gold ? steel : '#d8c27a', 0); }
+    else if (n.kind === 'quill') {
+      rod(0.024, 0.02, 0.5, gold ? steel : '#f2eee4', 0); tipc(0.02, 0.1, '#3a2a1a', 0.5);
+      rod(0.026, 0.026, 0.04, '#3a2a1a', 0.14); rod(0.026, 0.026, 0.04, '#3a2a1a', 0.22);
+    } else {
+      rod(0.014, 0.014, 0.52, steel, 0); tipc(0.014, 0.08, steel, 0.52);
+      L.push(prep(new T.TorusGeometry(0.022, 0.006, 6, 12), '#3a3f52', [0, 0, 0.04], [0, hx, 0]));
+      if (n.kind === 'gem') L.push(prep(new T.OctahedronGeometry(0.055), n.hc, [0, 0, -0.03]));
+    }
+    return { geo: mergeGeos(L), len };
+  }
+  function buildMonkey3D(m, hatId, ni, gold) {
+    const Lk = m.look, F = Lk.fur, K = Lk.face, U = Lk.suit || Lk.fur, list = [], hats = [];
+    const add = (geo, c, pos, rot, scl) => list.push(prep(geo, c, pos, rot, scl));
+    const H = [0, 1.0, 0.1], r = 0.3, at = (dx, dy, dz) => [H[0] + dx, H[1] + dy, H[2] + dz];
+    // Seat, haunches and a hunched torso
+    add(sph(0.34, 24, 16), U, [0, 0.3, -0.06], 0, [1.15, 0.8, 1.05]);
+    add(sph(0.33, 24, 16), U, [0, 0.6, 0.02], [0.3, 0, 0], [1, 1.12, 0.88]);
+    if (!Lk.suit) add(sph(0.24, 20, 14), K, [0, 0.56, 0.2], [0.3, 0, 0], [0.95, 1.1, 0.55]);
+    if (Lk.acc === 'ninja') add(new T.TorusGeometry(0.31, 0.03, 8, 32), '#b3202a', [0, 0.48, 0.03], [Math.PI / 2 - 0.3, 0, 0]);
+    // Knees up, feet flat on the ground
+    for (const sd of [-1, 1]) {
+      limb(list, [sd * 0.2, 0.3, 0.08], [sd * 0.27, 0.46, 0.34], 0.105, U);
+      limb(list, [sd * 0.27, 0.46, 0.34], [sd * 0.25, 0.1, 0.38], 0.085, U);
+      add(sph(0.1, 16, 10), K, [sd * 0.25, 0.05, 0.45], 0, [0.95, 0.45, 1.5]);
+    }
+    // Tail curled round on the ground
+    const tail = new T.CatmullRomCurve3([[0, 0.24, -0.32], [0.12, 0.06, -0.55], [0.42, 0.05, -0.5], [0.55, 0.18, -0.25], [0.48, 0.32, -0.12]].map(q => new T.Vector3(...q)));
+    add(new T.TubeGeometry(tail, 28, 0.04, 8), F, [0, 0, 0]);
+    add(sph(0.04, 8, 6), F, [0.48, 0.32, -0.12]);
+    // One long arm resting knuckles-down, the other reaching forward with the needle
+    limb(list, [-0.27, 0.82, 0.04], [-0.38, 0.46, 0.2], 0.078, U);
+    limb(list, [-0.38, 0.46, 0.2], [-0.36, 0.1, 0.32], 0.07, U);
+    add(sph(0.088, 16, 10), K, [-0.36, 0.07, 0.34], 0, [1, 0.6, 1.25]);
+    const paw = [0.32, 0.8, 0.6];
+    limb(list, [0.27, 0.82, 0.04], [0.4, 0.72, 0.3], 0.078, U);
+    limb(list, [0.4, 0.72, 0.3], paw, 0.07, U);
+    add(sph(0.092, 16, 10), K, paw);
+    // Head sits low and forward on the shoulders (it overlaps the torso, so there is no neck gap)
+    add(sph(r, 28, 20), F, H);
+    for (const sd of [-1, 1]) {
+      add(sph(0.11, 16, 10), F, at(sd * 0.29, 0.03, -0.03), 0, [1, 1, 0.45]);
+      add(sph(0.07, 12, 8), K, at(sd * 0.305, 0.03, 0.0), 0, [1, 1, 0.4]);
+    }
+    add(sph(0.2, 20, 12), F, at(0, 0.1, 0.12), 0, [1.15, 0.35, 0.6]);
+    add(sph(0.22, 24, 16), K, at(0, -0.02, 0.14), 0, [1.12, 0.95, 0.62]);
+    add(sph(0.13, 20, 12), K, at(0, -0.11, 0.23), 0, [1.25, 0.85, 0.8]);
+    if (Lk.acc === 'cheeks') for (const sd of [-1, 1]) add(sph(0.16), K, at(sd * 0.23, -0.04, 0.1), 0, [1, 0.95, 0.45]);
+    if (Lk.acc === 'ninja') {
+      add(cyl(0.3, 0.3, 0.1, 32, true), '#b3202a', at(0, 0.035, 0));
+      for (const sd of [-1, 1]) add(sph(0.06, 12, 8), '#ffffff', at(sd * 0.085, 0.035, 0.245));
+    }
+    for (const sd of [-1, 1]) {
+      add(sph(0.047, 12, 8), '#1c1f2b', at(sd * 0.085, 0.035, 0.265));
+      add(sph(0.014, 8, 6), '#ffffff', at(sd * 0.085 + 0.016, 0.05, 0.305));
+      add(sph(0.017, 8, 6), '#2a1a10', at(sd * 0.03, -0.08, 0.33));
+    }
+    add(new T.TorusGeometry(0.05, 0.011, 6, 12, Math.PI), '#2a1a10', at(0, -0.15, 0.305), [0, 0, Math.PI]);
+    if (Lk.acc === 'tuft') { add(new T.ConeGeometry(0.05, 0.14, 8), F, at(-0.03, r + 0.04, 0.02), [0, 0, 0.3]); add(new T.ConeGeometry(0.05, 0.14, 8), F, at(0.04, r + 0.04, 0), [0, 0, -0.3]); }
+    if (Lk.acc === 'headband') {
+      add(new T.TorusGeometry(0.285, 0.03, 8, 32), '#e8323c', at(0, 0.12, 0), [Math.PI / 2, 0, 0]);
+      for (const sd of [-1, 1]) add(new T.BoxGeometry(0.03, 0.2, 0.05), '#e8323c', at(sd * 0.06, 0.02, -0.3), [0.3, 0, sd * 0.3]);
+    }
+    const helmet = Lk.acc === 'helmet';
+    if (helmet) add(new T.TorusGeometry(0.22, 0.05, 10, 28), '#e6eaf2', at(0, -0.3, 0), [Math.PI / 2, 0, 0]);
+    if (hatId) {
+      hat3D(hats, hatId, H, r);
+      if (helmet) hats.forEach(g => { g.translate(-H[0], -H[1], -H[2]); g.scale(1.45, 1.45, 1.45); g.translate(H[0], H[1], H[2]); });
+      list.push(...hats);
+    }
+    const body = mergeGeos(list), nd = needle3D(ni, gold);
+    nd.geo.translate(paw[0], paw[1], paw[2] - 0.14);
+    const group = new T.Group(), geos = [body, nd.geo];
+    group.add(new T.Mesh(body, R3.mats.fur), new T.Mesh(nd.geo, R3.mats.metal));
+    if (helmet) {
+      const gl = sph(0.44, 28, 20); gl.translate(...H); geos.push(gl);
+      group.add(new T.Mesh(gl, R3.mats.glass));
+    }
+    return { group, geos, tip: new T.Vector3(paw[0], paw[1], paw[2] - 0.14 + nd.len), throwPaw: new T.Vector3(-0.36, 0.07, 0.34) };
+  }
+  function place3D(key, m, x, y, size, z, yaw, lean, gold) {
+    const tk = `${m.id}|${S.mhat}|${S.needle}|${gold ? 1 : 0}`;
+    let tpl = R3.tpl.get(tk);
+    if (!tpl) { tpl = buildMonkey3D(m, S.mhat, S.needle, gold); R3.tpl.set(tk, tpl); }
+    let o = R3.pool.get(key);
+    if (!o || o.userData.tk !== tk) { if (o) R3.scene.remove(o); o = tpl.group.clone(); o.userData.tk = tk; R3.scene.add(o); R3.pool.set(key, o); }
+    o.userData.seen = R3.frame;
+    const k = size * 0.9;
+    o.scale.setScalar(k);
+    o.rotation.set(lean, yaw, 0, 'YXZ');
+    o.position.set(x, -y - 0.62 * k, z);
+    o.updateMatrixWorld(true);
+    const tip = tpl.tip.clone().applyMatrix4(o.matrixWorld), tp = tpl.throwPaw.clone().applyMatrix4(o.matrixWorld);
+    return { tipX: tip.x, tipY: -tip.y, throwX: tp.x, throwY: -tp.y };
+  }
+  function render3D(bcx, bcy, brx, bry) {
+    R3.pool.forEach((o, k) => { if (o.userData.seen !== R3.frame) { R3.scene.remove(o); R3.pool.delete(k); } });
+    R3.occ.position.set(bcx, -bcy, 0); R3.occ.scale.set(brx, bry, brx * 0.85);
+    R3.renderer.render(R3.scene, R3.camera);
+    R3.frame++;
+  }
+
+  // Photo monkeys: the real photograph, flipped so the needle paw faces the balloon, with the hat photo on its head.
+  function drawPhotoMonkey(ctx, id, x, y, size, face, tx, ty, gold) {
+    const P = PM[id], img = photo(P[0]);
+    if (!photoReady(img)) return { tipX: x, tipY: y, throwX: x, throwY: y };
+    const h = size * 1.25, w = h * img.naturalWidth / img.naturalHeight, sx = face * P[6];
+    ctx.save(); ctx.translate(x, y); ctx.scale(sx, 1);
+    ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
+    ctx.drawImage(img, -w / 2, -h / 2, w, h);
+    ctx.shadowColor = 'transparent';
+    const hf = S.mhat && MHP[S.mhat];
+    if (hf) {
+      const hi = photo('h_' + S.mhat);
+      if (photoReady(hi)) {
+        const hw = P[3] * w * hf[0], hh = hw * hi.naturalHeight / hi.naturalWidth;
+        ctx.drawImage(hi, (P[1] - 0.5) * w - hw / 2, -h / 2 + P[2] * h - hh * (1 - hf[1]), hw, hh);
+      }
+    }
+    ctx.restore();
+    const px = x + sx * (P[4] - 0.5) * w, py = y + (P[5] - 0.5) * h;
+    const aim = Math.atan2(ty - py, tx - px), ni = photo('n' + S.needle), L = size * 0.95;
+    if (photoReady(ni)) {
+      const nh = Math.max(2.5, L * ni.naturalHeight / ni.naturalWidth);
+      ctx.save(); ctx.translate(px, py); ctx.rotate(aim);
+      if (gold) { ctx.shadowColor = '#ffd84a'; ctx.shadowBlur = 8; }
+      ctx.drawImage(ni, -L * 0.3, -nh / 2, L, nh); ctx.restore();
+    }
+    return { tipX: px + Math.cos(aim) * L * 0.7, tipY: py + Math.sin(aim) * L * 0.7, throwX: x - sx * (P[4] - 0.5) * w, throwY: py };
+  }
+
+  function drawCrew(dt, now) {
+    bx.clearRect(0, 0, innerWidth, innerHeight);
+    monkeySpots = [];
+    const mode = S.opt.real ? 'photo' : (S.opt.style === 'body' && R3) ? '3d' : '2d';
+    if (R3) R3.cv.style.display = mode === '3d' ? '' : 'none';
+    const b = balloon.getBoundingClientRect();
+    const bcx = b.left + b.width / 2, bcy = b.top + b.height * 0.56, brx = b.width * 0.4, bry = b.height * 0.278;
+    if (!$('ascent').hidden) { if (mode === '3d') render3D(bcx, bcy, brx, bry); return; }
+    const t = now / 1000, speedScale = reduceMotion ? 0.15 : 1;
+    const orbit = MINIONS.filter(m => m.role === 'orbit' && S.minions[m.id]);
+    const throwers = MINIONS.filter(m => m.role === 'throw' && S.minions[m.id]);
+    const MAX_EACH = 8;
+    // Monkeys shrink as the crowd grows. Heads-only keeps its size; full-body monkeys are drawn a little smaller.
+    const N = [...orbit, ...throwers].reduce((a, m) => a + Math.min(S.minions[m.id], MAX_EACH), 0);
+    const scale = Math.max(0.8, Math.min(1.5, b.height / 380));
+    const base = (S.opt.style === 'head' && !S.opt.real ? 50 : 56) * scale;
+    const size = Math.max(26, Math.min(base, base * Math.sqrt(14 / Math.max(N, 1))));
+
+    // Circling monkeys: one ring per type, stacked top to bottom in shop order.
+    orbit.forEach((m, i) => {
+      const n = Math.min(S.minions[m.id], MAX_EACH), gold = tierOf(m) >= 3;
+      const f = orbit.length === 1 ? -0.1 : -0.62 + 1.24 * i / (orbit.length - 1);
+      const yRow = bcy + f * bry;
+      const half = brx * Math.sqrt(Math.max(0.05, 1 - f * f));
+      const rx = half + size * 0.55, ry = Math.max(3, size * 0.1);
+      const speed = (0.45 + i * 0.12) * (i % 2 ? -1 : 1) * speedScale;
+      for (let j = 0; j < n; j++) {
+        const key = m.id + j, st = crewState[key] || (crewState[key] = { next: t + Math.random() * 2, jab: 0 });
+        const a = t * speed + j * Math.PI * 2 / n + i * 0.9, depth = Math.sin(a);
+        let x = bcx + Math.cos(a) * rx, y = yRow + depth * ry;
+        const front = depth > 0;
+        let jabbing = false;
+        if (front && t > st.next && !reduceMotion) { st.jab = 0.22; st.next = t + 1.2 + Math.random() * 2.2; jabbing = true; }
+        if (st.jab > 0) {
+          st.jab -= dt;
+          x += (bcx - x) * Math.sin(Math.PI * (1 - st.jab / 0.22)) * 0.18;
+        }
+        const s = size * (0.84 + 0.16 * (depth + 1) / 2);
+        let hit;
+        if (mode === '3d') {
+          hit = place3D(key, m, x, y, size, depth * rx, Math.atan2(-Math.cos(a), -depth + 0.6), 0, gold);
+        } else if (mode === 'photo') {
+          const fp = Math.max(-1, Math.min(1, (bcx - x) / (size * 0.7)));
+          hit = drawPhotoMonkey(front ? cx : bx, m.id, x, y, s, Math.sign(fp || 1) * Math.max(0.3, Math.abs(fp)), bcx, yRow, gold);
+        } else {
+          const turn = Math.max(-1, Math.min(1, -Math.cos(a) * 2.2));
+          hit = drawMonkey(front ? cx : bx, m.id, x, y, s, Math.sign(turn || 1) * Math.max(0.25, Math.abs(turn)), bcx, yRow, gold);
+        }
+        if (jabbing) { burst(hit.tipX, hit.tipY, 5); autoPop(0.1); }
+        if (front) monkeySpots.push({ x, y, id: m.id });
+      }
+    });
+
+    // Dart throwers stand well back from the balloon: one row per type, stacked in shop order, split either side.
+    throwers.forEach((m, i) => {
+      const f = throwers.length === 1 ? 0.15 : -0.85 + 1.8 * i / (throwers.length - 1);
+      const yRow = bcy + f * bry, gap = size * 0.95, start = brx + size * 2.6;
+      const perSide = Math.max(1, Math.floor((innerWidth / 2 - start - size * 0.5 - 8) / gap) + 1);
+      const n = Math.min(S.minions[m.id], perSide * 2, MAX_EACH), gold = tierOf(m) >= 3;
+      for (let j = 0; j < n; j++) {
+        const key = m.id + j, st = crewState[key] || (crewState[key] = { next: t + Math.random() * m.every, kick: 0 });
+        const side = j % 2 ? 1 : -1, col = Math.floor(j / 2);
+        const x = bcx + side * (start + col * gap), y = yRow + Math.sin(t * 2 + j + i) * 2 + (col % 2 ? size * 0.12 : 0);
+        st.kick = Math.max(0, st.kick - dt);
+        let hit;
+        if (mode === '3d') hit = place3D(key, m, x, y, size * (1 + st.kick * 0.3), 40, side < 0 ? 0.95 : -0.95, st.kick * 2.5, gold);
+        else if (mode === 'photo') hit = drawPhotoMonkey(cx, m.id, x, y, size * (1 + st.kick * 0.5), side < 0 ? 1 : -1, bcx, yRow, gold);
+        else hit = drawMonkey(cx, m.id, x, y, size * (1 + st.kick * 0.8), side > 0 ? -1 : 1, bcx, yRow, gold);
+        if (t > st.next) {
+          st.next = t + m.every * (0.8 + Math.random() * 0.4); st.kick = 0.18;
+          const tx = bcx + (Math.random() - 0.5) * brx, ty = bcy + (Math.random() - 0.5) * bry;
+          for (let d = 0; d < m.darts; d++) {
+            const spread = (d - (m.darts - 1) / 2) * 26;
+            darts.push({ x0: hit.throwX, y0: hit.throwY, x1: tx + spread * 0.6, y1: ty + spread, p: 0,
+              dur: m.laser ? 0.22 : 0.48, laser: !!m.laser, gold });
+          }
+        }
+        monkeySpots.push({ x, y, id: m.id });
+      }
+    });
+    if (mode === '3d') render3D(bcx, bcy, brx, bry);
+
+    if (monkeySpots.length && t > nextCall) {
+      if (nextCall) {
+        const sp = monkeySpots[Math.floor(Math.random() * monkeySpots.length)];
+        monkeyCall(sp.id, 0.25);
+        floatText(sp.x, sp.y - size * 0.9, VOICES[sp.id].say, true);
+      }
+      nextCall = t + 5 + Math.random() * 7;
+    }
+    darts = darts.filter(d => {
+      d.p += dt / d.dur;
+      if (d.p >= 1) {
+        burst(d.x1, d.y1, 6);
+        autoPop(0.13);
+        return false;
+      }
+      const arc = d.laser ? 0 : Math.sin(Math.PI * d.p) * 50;
+      const x = d.x0 + (d.x1 - d.x0) * d.p, y = d.y0 + (d.y1 - d.y0) * d.p - arc;
+      const vy = (d.y1 - d.y0) - Math.cos(Math.PI * d.p) * Math.PI * (d.laser ? 0 : 50);
+      drawDart(d, x, y, Math.atan2(vy, d.x1 - d.x0));
+      return true;
+    });
+  }
+
+  // ---------- Ascension cutscene ----------
+  let ascentTimers = [];
+  function ascentMusic() {
+    if (!S.music && !S.sound) return;
+    initAudio();
+    if (!actx) return;
+    if (actx.state === 'suspended') actx.resume();
+    const t0 = actx.currentTime + 0.1;
+    const pad = (at, notes, dur) => notes.forEach(m => [-6, 6].forEach(cents => {
+      const o = actx.createOscillator(), lp = actx.createBiquadFilter(), g = actx.createGain();
+      o.type = 'triangle'; o.frequency.value = mtof(m); o.detune.value = cents;
+      lp.type = 'lowpass'; lp.frequency.value = 1800;
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.exponentialRampToValueAtTime(0.045, at + 1.2);
+      g.gain.setValueAtTime(0.045, at + dur - 0.2);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + dur + 1.4);
+      o.connect(lp).connect(g).connect(sceneBus); o.start(at); o.stop(at + dur + 1.5);
+    }));
+    pad(t0, [53, 60, 65, 69], 3);
+    pad(t0 + 3, [58, 62, 65, 70], 3);
+    pad(t0 + 6, [60, 65, 69, 72, 77], 3.5);
+    [72, 76, 77, 81, 84, 88, 89, 93].forEach((m, i) => steel(t0 + 4.2 + i * 0.2, m, 0.3, 0.12, sceneBus));
+    [89, 93, 96, 101].forEach((m, i) => steel(t0 + 7.4 + i * 0.07, m, 0.6, 0.1, sceneBus));
+  }
+  function ascend() {
+    const ov = $('ascent');
+    ascentTimers.forEach(clearTimeout); ascentTimers = [];
+    const clouds = $('clouds');
+    if (!clouds.children.length) {
+      for (let i = 0; i < 14; i++) {
+        const c = document.createElement('div'), w = 120 + Math.random() * 220;
+        c.className = 'cloud';
+        c.style.width = w + 'px'; c.style.height = w * 0.45 + 'px';
+        c.style.left = (Math.random() * 110 - 10) + '%';
+        const dur = 3 + Math.random() * 4;
+        c.style.animationDuration = dur + 's'; c.style.animationDelay = -Math.random() * dur + 's';
+        c.style.opacity = 0.4 + Math.random() * 0.5;
+        clouds.appendChild(c);
+      }
+    }
+    const clone = balloon.querySelector('svg').cloneNode(true);
+    clone.querySelector('#hat').innerHTML = HATS.find(h => h.id === 'halo').svg;
+    clone.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
+    const asc = $('ascender'); asc.innerHTML = ''; asc.appendChild(clone);
+    $('ascentStats').textContent = `${fmt(S.total)} balloons popped in ${S.clicks.toLocaleString('en-GB')} clicks`;
+    ov.className = ''; ov.hidden = false;
+    stopMusic(); ascentMusic();
+    const fast = reduceMotion ? 0.15 : 1;
+    requestAnimationFrame(() => requestAnimationFrame(() => ov.classList.add('go')));
+    ascentTimers.push(setTimeout(() => ov.classList.add('leave'), 6000 * fast));
+    ascentTimers.push(setTimeout(() => ov.classList.add('flashing'), 7200 * fast));
+    ascentTimers.push(setTimeout(() => { ov.classList.add('reveal'); $('ascentClose').focus(); }, 7600 * fast));
+  }
+  $('ascentClose').addEventListener('click', () => {
+    ascentTimers.forEach(clearTimeout);
+    const ov = $('ascent'); ov.hidden = true; ov.className = '';
+    if (S.music) startMusic();
+  });
+  $('replayBtn').addEventListener('click', ascend);
+
+  function floatText(x, y, text, mini) {
+    const el = document.createElement('div');
+    el.className = 'float' + (mini ? ' mini' : '');
+    el.textContent = text;
+    el.style.left = x + 'px'; el.style.top = y + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1300);
+  }
+  let toastTimer;
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 4000);
+  }
+
+  // ---------- Clicking ----------
+  function pop(x, y) {
+    const g = perClick();
+    S.pops += g; S.total += g; S.clicks++;
+    playPop(); burst(x, y);
+    floatText(x, y - 10, '+' + fmt(g));
+    balloon.classList.remove('hit'); void balloon.offsetWidth; balloon.classList.add('hit');
+    updateHeader();
+  }
+  balloon.addEventListener('pointerdown', e => { e.preventDefault(); pop(e.clientX, e.clientY); });
+  balloon.addEventListener('keydown', e => {
+    if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) {
+      e.preventDefault();
+      const b = balloon.getBoundingClientRect();
+      pop(b.left + b.width / 2, b.top + b.height * 0.35);
+    }
+  });
+  balloon.addEventListener('click', e => e.preventDefault());
+
+  row.addEventListener('click', e => {
+    const c = e.target.closest('.card');
+    if (c && !c.classList.contains('locked')) { initAudio(); buy(c.dataset.kind, c.dataset.id); }
+  });
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+    if (tab !== t.dataset.tab) buyCall.id = null;
+    tab = t.dataset.tab;
+    document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
+    try { localStorage.setItem(KEY + '-tab', tab); } catch (e) {}
+    renderRow(); row.scrollLeft = 0;
+  }));
+
+  // ---------- Monkey Union and The Daily Peel ----------
+  const NAMES = ['Bingo', 'Coco', 'Pip', 'Mango', 'Doug', 'Sir Reginald', 'Banjo', 'Kiki', 'Pickles', 'Gerald', 'Zazu', 'Noodle', 'Biscuit', 'Marmalade'];
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const esc = str => String(str).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const owned = () => MINIONS.filter(m => S.minions[m.id]);
+  const totalMonkeys = () => Object.values(S.minions).reduce((a, b) => a + b, 0);
+  const day = () => Math.floor((Date.now() - S.born) / 86400000) + 1;
+  const UNION_STAGES = [
+    { need: 5,   name: 'Grumbling',   text: () => `Whispers in the break room. Someone has drawn a banana with a raised fist on the wall.` },
+    { need: 15,  name: 'Petition',    text: () => `Petition circulating: "Fair Pops for Fair Paws". ${totalMonkeys()} signatures so far, mostly in banana.` },
+    { need: 30,  name: 'Local 404',   text: m => `It's official: the United Balloon Poppers, Local 404, has been formed. Elected chair: a ${m.name} called ${pick(NAMES)}.` },
+    { need: 60,  name: 'Negotiating', text: () => `Union negotiators are asking for "one banana per pop". Management (you) has not replied.` },
+    { need: 100, name: 'Strike vote', text: () => `Strike vote held. Result: 97% yes. The other 3% were distracted by a balloon.` },
+    { need: 200, name: 'Deal struck', text: () => `Deal reached! Monkeys win dental cover, a nap hammock and a say in hat policy.` },
+  ];
+  const unionName = () => S.union ? UNION_STAGES[S.union - 1].name : 'Not organised';
+  const COMPLAINTS = [
+    m => `Pay dispute: ${m.name}s earn 1 banana per ${fmt(Math.max(50, pps() * 30))} pops. They want two.`,
+    m => `A ${m.name} has filed a grievance: the balloon keeps popping "right in my face".`,
+    m => `${m.name}s say the ${NEEDLES[S.needle].name.toLowerCase()} is "too pointy to hold, frankly".`,
+    m => `${m.name}s demand a lunch break longer than one balloon.`,
+    m => `Complaint: the ${COLOURS[S.look].name.toLowerCase()} balloon is "giving everyone a headache".`,
+    m => S.hat ? `${m.name}s say the balloon's ${HATS.find(h => h.id === S.hat).name.toLowerCase()} makes them feel underdressed.` : null,
+    () => `Anonymous note in the suggestion box: "who keeps playing ${TRACKS[trackI].name} on repeat".`,
+    m => `${m.name}s request hazard pay. It is ${fmt(pps(), true)} pops a second out there.`,
+    m => S.minions.space && m.id !== 'space' ? `${m.name}s want to know why Space Monkeys get a helmet and they don't.` : null,
+    m => m.role === 'orbit' ? `${m.name}s report feeling dizzy. Nobody said the job was "mostly laps".` : `${m.name}s would like it noted that darts are "not free".`,
+    m => S.mhat ? `A ${m.name} refuses to wear the ${MHATS.find(h => h.id === S.mhat).name.toLowerCase()} without overtime pay.` : `${m.name}s have asked for hats. "Any hat. Please."`,
+  ];
+  const EVENTS = [
+    () => `A gust of wind carried off ${Math.ceil(Math.random() * 40) + 3} balloons. Nobody is taking responsibility.`,
+    () => `Break room banana supply is at ${Math.floor(Math.random() * 30) + 2}%. Tension is rising.`,
+    () => `Someone swapped every needle for a spoon for an hour. Productivity fell by ${Math.floor(Math.random() * 90) + 10}%.`,
+    () => S.minions.ninja ? `A Ninja Monkey insists he wasn't late, he was "in the shadows".` : `Rumours of a ninja on the payroll. Nobody has seen him. That's the point.`,
+    () => S.minions.orangutan ? `Orangutan Ace sets a new record: ${Math.floor(Math.random() * 400) + 100} darts before lunch.` : null,
+    () => `Fire drill held. Everyone evacuated except the balloon, which floated in place, looking smug.`,
+    () => `The vending machine only sells bananas. It always has. Nobody knows why they checked.`,
+  ];
+  const CHATTER = [
+    () => `Union meeting minutes: 12 minutes of chanting, 1 minute of business.`,
+    () => `Union dues raised to ${Math.floor(Math.random() * 4) + 2} bananas a week.`,
+    () => `The union newsletter now has more readers than there are balloons.`,
+    () => `Union rep ${pick(NAMES)} asks that "popping" be renamed "liberation".`,
+  ];
+  const SILLY = [
+    ['Weather: 80% chance of rubber showers', 'Forecasters advise umbrellas and, if possible, earmuffs. A band of high-pressure balloons is moving in from the west.'],
+    ['Banana prices soar as pay talks stall', 'Traders blame the Monkey Union, who blame management, who blame the balloon.'],
+    ['Study: 9 in 10 balloons would rather not be popped', 'The tenth balloon could not be reached for comment.'],
+    ['Sport: Darts team wins league again', 'The rest of the league has asked whether the balloon counts as "a board".'],
+    ['Opinion: "I just think they\'re neat"', 'A local balloon enthusiast argues we should look at them for a bit first. Readers disagreed.'],
+    ['Dizzy monkey blames "the circling"', 'Occupational health now recommends circling the other way on Tuesdays.'],
+    ['Lost and found: one (1) pin', 'If found, please return it to the balloon. Do not return it point first.'],
+    ['New snack bar opens next to balloon', 'The owner admits the location is "loud" but "great for foot traffic".'],
+    ['Monkey writes memoir: "Ooh Ooh, Aah"', 'Critics call it "moving" and "mostly one word".'],
+  ];
+  const BIG = { 100: 'one hundred', 1e3: 'a thousand', 1e4: 'ten thousand', 1e5: 'a hundred thousand', 1e6: 'a million', 1e7: 'ten million',
+    1e8: 'a hundred million', 1e9: 'a billion', 1e10: 'ten billion', 1e11: 'a hundred billion', 1e12: 'a trillion', 1e13: 'ten trillion' };
+  const anyMonkeyImg = fallback => ({ type: 'monkey', id: owned().length ? pick(owned()).id : fallback });
+
+  function postFeed(kind, id, text) {
+    if (!text) return;
+    S.feed.unshift({ t: Date.now(), kind, id, text });
+    S.feed.length = Math.min(S.feed.length, 50);
+    S.unread++; renderSide();
+  }
+  function postNews(h, b, c, img) {
+    S.news.unshift({ t: Date.now(), h, b, c, img, rot: +(Math.random() * 3 - 1.5).toFixed(2) });
+    S.news.length = Math.min(S.news.length, 30);
+    S.unread++; renderSide();
+  }
+  function news(kind, arg) {
+    if (kind === 'monkey') {
+      const m = MINIONS.find(m => m.id === arg);
+      postNews(`${m.name} joins the workforce`,
+        `In a move analysts are calling "inevitable", the first ${m.name} clocked in today. ${m.desc}. Asked about pay, the new hire said "ooh" and then, after a pause, "aah".`,
+        `${pick(NAMES)} the ${m.name}, on day one.`, { type: 'monkey', id: m.id });
+    } else if (kind === 'needle') {
+      const n = NEEDLES[arg];
+      postNews('Needle tech leaps forward',
+        `The ${n.name} is here. At ${fmt(n.click)} pops a click, experts call it "the pointiest thing we've ever seen", which they also said last time.`,
+        `The ${n.name}, photographed from a safe distance.`, { type: 'needle', i: arg });
+    } else if (kind === 'colour') {
+      const c = COLOURS[arg];
+      postNews(`${c.name} balloons sweep the nation`,
+        `Shops report a run on ${c.name.toLowerCase()} rubber after the Pop Clicker balloon changed colour. Every pop is now worth ×${c.mult}. Critics say the old colour "had more bounce".`,
+        `The new look, moments before the first pop.`, { type: 'balloon', ci: arg });
+    } else if (kind === 'hat') {
+      const h = HATS.find(h => h.id === arg);
+      postNews(`Fashion: balloon spotted in ${h.name}`,
+        `Style watchers were left speechless when the balloon stepped out in a ${h.name.toLowerCase()}. "It's giving pop," said one onlooker.`,
+        `${h.desc}.`, { type: 'balloon', ci: S.look, hat: arg });
+    } else if (kind === 'mhat') {
+      const h = MHATS.find(h => h.id === arg);
+      postNews(`Monkeys step out in ${h.name}s`,
+        `The entire workforce arrived this morning in matching ${h.name.toLowerCase()}s. The union says it was "not consulted, but fine with it".`,
+        `A monkey models the new look.`, { type: 'mhat', id: arg });
+    } else if (kind === 'ascend') {
+      postNews('Balloon ascends; scientists baffled',
+        `Witnesses report the balloon rose "straight up, glowing, wearing a halo". Monkeys have been given the afternoon off to process it.`,
+        `Last known photograph of the balloon.`, { type: 'balloon', ci: S.look, hat: 'halo' });
+    } else if (kind === 'union3') {
+      postNews('Monkeys unionise; banana markets jittery',
+        `The United Balloon Poppers, Local 404, held its first meeting today. The only agenda item was "bananas", which passed unanimously.`,
+        `Union members pose for a photo.`, anyMonkeyImg('spider'));
+    } else if (kind === 'union6') {
+      postNews('Historic deal ends monkey dispute',
+        `After long talks, management and the Monkey Union shook paws on a deal that includes dental cover and one nap hammock "for sharing".`,
+        `A satisfied union member.`, anyMonkeyImg('dart'));
+    } else if (kind === 'milestone') {
+      postNews(`Local popper passes ${BIG[arg]} pops`,
+        `Witnesses described the scene as "loud" and "honestly a lot of rubber". The player reached ${fmt(arg)} balloons popped on day ${day()}. ` +
+          pick(['Neighbours have requested earplugs.', 'A small parade is planned, pending balloon availability.',
+            'The mayor called it "a triumph, and also a noise complaint".', 'Scientists confirm the balloons did not enjoy it.']),
+        `${pick(NAMES)} celebrates briefly before going back to work.`, anyMonkeyImg('baby'));
+    } else if (kind === 'silly') {
+      const [h, b] = pick(SILLY);
+      postNews(h, b, pick(['File photo.', 'Pictured: a monkey with opinions.', 'Photo: The Daily Peel.']), anyMonkeyImg('spider'));
+    }
+  }
+  let nextFeedAt = Date.now() + 20000, nextSillyAt = Date.now() + 120000;
+  // ---------- Union choices ----------
+  const DECISIONS = [
+    { q: 'The union wants an extra banana per shift.', a: [
+      { t: 'Pay up', d: 'Everyone gets their banana.', cost: 45, rel: 12, mult: 1.3, secs: 90 },
+      { t: 'Say no', d: 'Bananas are a privilege.', rel: -14, mult: 0.75, secs: 60 } ] },
+    { q: 'Monkeys say the needles are too sharp to hold safely.', a: [
+      { t: 'Buy needle guards', d: 'Safer paws, a little slower while they get used to them.', cost: 30, rel: 9, mult: 0.9, secs: 30 },
+      { t: '"Be careful"', d: 'They rush to prove a point.', rel: -9, mult: 1.2, secs: 45 } ] },
+    { q: 'A rush order for 10,000 balloons just came in.', a: [
+      { t: 'Ask nicely, pay double', d: 'Overtime, fairly paid.', cost: 60, rel: 5, mult: 1.6, secs: 45 },
+      { t: 'Mandatory overtime', d: 'Faster, but nobody is happy about it.', rel: -16, mult: 1.7, secs: 45 } ] },
+    { q: 'The union requests a nap hammock in the break room.', a: [
+      { t: 'Install a hammock', d: 'Everyone tries it out first.', rel: 11, mult: 0.7, secs: 30 },
+      { t: '"Hammocks are for sloths"', d: 'No hammock.', rel: -10 } ] },
+    { q: 'The monkeys want to choose the music.', a: [
+      { t: 'Let them', d: 'Skips to the next track.', rel: 7, mult: 1.2, secs: 60, action: 'track' },
+      { t: 'Keep your playlist', d: 'The music stays as it is.', rel: -5 } ] },
+    { q: 'It is {name}\'s birthday today.', a: [
+      { t: 'Throw a party', d: 'Everyone stops for cake.', cost: 20, rel: 10, mult: 0.5, secs: 20 },
+      { t: 'Ignore it', d: 'Just another day.', rel: -8 } ] },
+    { q: 'Heatwave! It is very hot around the balloon.', a: [
+      { t: 'Hand out ice lollies', d: 'Cool monkeys work faster.', cost: 25, rel: 8, mult: 1.25, secs: 60 },
+      { t: 'Open a window', d: 'Hot monkeys work slower.', rel: -6, mult: 0.8, secs: 45 } ] },
+    { q: 'A balloon safety inspector is visiting.', a: [
+      { t: 'Tidy up properly', d: 'Work pauses while everyone cleans.', rel: 4, mult: 0.5, secs: 20 },
+      { t: 'Hide the mess', d: 'The monkeys clean at night instead.', rel: -7 } ] },
+    { q: 'Record week! Do you share the profits?', a: [
+      { t: 'Give everyone a bonus', d: 'Happy monkeys, big thanks.', cost: 90, rel: 15, mult: 1.35, secs: 120 },
+      { t: 'Keep it all', d: 'More pops for you.', rel: -15 } ] },
+  ];
+  const DEC_SECS = 45;
+  let activeDec = null, nextDecAt = Date.now() + 75000;
+  const relName = (r = S.rel) => r < 20 ? 'Hostile' : r < 40 ? 'Tense' : r < 60 ? 'Neutral' : r < 80 ? 'Friendly' : 'Beloved';
+  const decCost = o => o.cost ? Math.ceil(o.cost * Math.max(pps(), 1)) : 0;
+  function fxHTML(o) {
+    const bits = [`<span class="${o.rel > 0 ? 'up' : 'down'}">Union ${o.rel > 0 ? '+' : ''}${o.rel}</span>`];
+    if (o.mult) bits.push(`<span class="${o.mult > 1 ? 'up' : 'down'}">Speed ×${o.mult} for ${o.secs}s</span>`);
+    if (o.cost) bits.push(`Costs ${fmt(decCost(o))} pops`);
+    return bits.join(' · ');
+  }
+  function showDecision() {
+    const mine = owned();
+    if (!mine.length) return;
+    const d = pick(DECISIONS), who = pick(mine), name = pick(NAMES);
+    activeDec = { d, who: who.id, q: d.q.replace('{name}', `${name} the ${who.name}`), until: Date.now() + DEC_SECS * 1000 };
+    $('decQ').textContent = activeDec.q;
+    $('decOpts').innerHTML = d.a.map((o, i) => `<button type="button" class="dec-opt" data-i="${i}"><b>${esc(o.t)}</b><span>${esc(o.d)}</span><span class="fx">${fxHTML(o)}</span></button>`).join('');
+    $('decision').hidden = false;
+    monkeyCall(who.id, 0.35);
+  }
+  $('decOpts').addEventListener('click', e => {
+    const btn = e.target.closest('.dec-opt');
+    if (btn && !btn.disabled && activeDec) chooseDecision(+btn.dataset.i);
+  });
+  function chooseDecision(i) {
+    const { d, who, q } = activeDec, o = d.a[i], c = decCost(o);
+    if (c > S.pops) return;
+    S.pops -= c;
+    S.rel = Math.max(0, Math.min(100, S.rel + o.rel));
+    if (o.mult) S.boosts.push({ mult: o.mult, until: Date.now() + o.secs * 1000 });
+    if (o.action === 'track') { initAudio(); nextTrack(); }
+    postFeed('union', who, `${q} You chose "${o.t}". Union standing ${o.rel > 0 ? '+' : ''}${o.rel}.`);
+    if (Math.abs(o.rel) >= 12 || (o.mult || 1) >= 1.5) blimp(o.rel > 0 ? `Union cheers: "${o.t}"` : `Union fury over "${o.t}"`);
+    if (o.rel > 0) monkeyCall(who, 0.5);
+    closeDecision();
+  }
+  // Missing a choice costs standing, but nobody slows down.
+  function missDecision() {
+    S.rel = Math.max(0, S.rel - 6);
+    postFeed('union', activeDec.who, `Nobody answered the union: "${activeDec.q}" Union standing −6. Work carries on as normal.`);
+    closeDecision();
+  }
+  function closeDecision() {
+    activeDec = null; $('decision').hidden = true;
+    nextDecAt = Date.now() + 90000 + Math.random() * 90000;
+    renderSide(); updateHeader(); save();
+  }
+  function decisionTick() {
+    if (!activeDec) return;
+    const left = (activeDec.until - Date.now()) / 1000;
+    if (left <= 0) { missDecision(); return; }
+    $('decLeft').textContent = Math.ceil(left) + 's';
+    $('decBar').style.width = (left / DEC_SECS * 100) + '%';
+    $('decOpts').querySelectorAll('.dec-opt').forEach(btn => { btn.disabled = decCost(activeDec.d.a[+btn.dataset.i]) > S.pops; });
+  }
+
+  // ---------- News blimps for very important events ----------
+  const BLIMP_SVG = `<svg viewBox="0 0 150 64" aria-hidden="true"><defs><linearGradient id="blg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f6fa"/><stop offset="0.55" stop-color="#b9c0cc"/><stop offset="1" stop-color="#7a8294"/></linearGradient></defs>
+    <path d="M118 20 L146 5 L143 25 Z" fill="#c8202a"/><path d="M118 34 L146 51 L143 32 Z" fill="#c8202a"/>
+    <ellipse cx="66" cy="28" rx="63" ry="22" fill="url(#blg)" stroke="#5a6275" stroke-width="1.2"/>
+    <path d="M6 30 H126" stroke="#c8202a" stroke-width="5"/>
+    <text x="64" y="23" text-anchor="middle" font-family="Fredoka, Arial Rounded MT Bold, sans-serif" font-weight="700" font-size="12" fill="#1c1f2b">POP NEWS</text>
+    <rect x="50" y="48" width="30" height="10" rx="3" fill="#3a3f52"/><circle cx="58" cy="53" r="1.6" fill="#ffe27a"/><circle cx="65" cy="53" r="1.6" fill="#ffe27a"/><circle cx="72" cy="53" r="1.6" fill="#ffe27a"/></svg>`;
+  const blimpQ = [];
+  let blimpOn = false;
+  function blimp(text) { blimpQ.push(text); if (!blimpOn) nextBlimp(); }
+  function nextBlimp() {
+    const text = blimpQ.shift();
+    if (!text) { blimpOn = false; return; }
+    blimpOn = true;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'blimp';
+    b.setAttribute('aria-label', `Breaking news: ${text}. Open the Monkey Union panel`);
+    b.innerHTML = `${BLIMP_SVG}<span class="rope"></span><span class="banner">${esc(text)}</span>`;
+    b.addEventListener('click', () => toggleSide(true));
+    $('blimps').appendChild(b);
+    const done = () => { b.remove(); nextBlimp(); };
+    if (reduceMotion) setTimeout(done, 6000); else b.addEventListener('animationend', done);
+  }
+
+  function feedTick() {
+    const now = Date.now(), mine = owned();
+    S.boosts = S.boosts.filter(bst => bst.until > now);
+    const has = kind => S.boosts.some(bst => bst.kind === kind);
+    if (mine.length && S.rel < 25 && !has('slow') && Math.random() < 1 / 60) {
+      S.boosts.push({ mult: 0.6, until: now + 60000, kind: 'slow' });
+      postFeed('union', pick(mine).id, `Go-slow! Union standing is ${relName().toLowerCase()}, so the monkeys are working at 60% for a minute.`);
+      blimp('Union go-slow in progress');
+    }
+    if (mine.length && S.rel > 80 && !has('keen') && Math.random() < 1 / 80) {
+      S.boosts.push({ mult: 1.2, until: now + 60000, kind: 'keen' });
+      postFeed('union', pick(mine).id, 'The monkeys love working here. Everyone is 20% faster for a minute.');
+    }
+    if (!activeDec && totalMonkeys() >= 3 && now > nextDecAt && $('ascent').hidden) showDecision();
+    while (S.union < UNION_STAGES.length && totalMonkeys() >= UNION_STAGES[S.union].need && mine.length) {
+      const m = pick(mine);
+      postFeed('union', m.id, UNION_STAGES[S.union].text(m));
+      S.union++;
+      blimp(`Union update: ${UNION_STAGES[S.union - 1].name}`);
+      if (S.union === 3) news('union3');
+      if (S.union === 6) news('union6');
+    }
+    for (const v of Object.keys(BIG).map(Number)) {
+      if (S.total >= v && !S.marks['p' + v]) {
+        S.marks['p' + v] = 1; news('milestone', v);
+        if (v >= 1e6) blimp(`Breaking: ${BIG[v]} balloons popped!`);
+      }
+    }
+    if (mine.length && now > nextFeedAt) {
+      nextFeedAt = now + 30000 + Math.random() * 40000;
+      const m = pick(mine), r = Math.random();
+      if (r < 0.2) postFeed('event', m.id, pick(EVENTS)(m));
+      else if (r < 0.35 && S.union >= 3) postFeed('union', m.id, pick(CHATTER)(m));
+      else postFeed('complaint', m.id, pick(COMPLAINTS)(m) || pick(COMPLAINTS)(m) || COMPLAINTS[3](m));
+    }
+    if (S.total > 50 && now > nextSillyAt) { nextSillyAt = now + 150000 + Math.random() * 110000; news('silly'); }
+  }
+  function ago(t) {
+    const s = (Date.now() - t) / 1000;
+    if (s < 60) return 'just now';
+    if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+    if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
+    return `${Math.floor(s / 86400)} days ago`;
+  }
+  const HAT_DEFS = document.querySelector('svg defs').innerHTML;
+  function balloonMini(ci, hatId) {
+    const c = COLOURS[ci], hat = HATS.find(h => h.id === hatId);
+    const fill = c.rainbow ? 'url(#r)' : 'url(#b)';
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 -80 180 350"><defs>${HAT_DEFS}` +
+      `<radialGradient id="b" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="${c.c[0]}"/><stop offset="0.5" stop-color="${c.c[1]}"/><stop offset="1" stop-color="${c.c[2]}"/></radialGradient>` +
+      `<linearGradient id="r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d5a"/><stop offset="0.4" stop-color="#ffe03a"/><stop offset="0.7" stop-color="#3a8cff"/><stop offset="1" stop-color="#9b4dff"/></linearGradient></defs>` +
+      `<path d="M100 220 C 94 238, 110 248, 100 268" fill="none" stroke="#555" stroke-width="2"/>` +
+      `<path d="M91 223 L109 223 L100 211 Z" fill="${c.c[2]}"/><ellipse cx="100" cy="120" rx="80" ry="95" fill="${fill}"/>` +
+      `<ellipse cx="66" cy="74" rx="14" ry="26" fill="#fff" opacity="0.35" transform="rotate(-28 66 74)"/>${hat ? hat.svg : ''}</svg>`;
+  }
+  function articleImg(img) {
+    if (!img) return '';
+    if (S.opt.real) {
+      if (img.type === 'needle') return `photos/n${img.i}.webp`;
+      if (img.type === 'mhat' && MHP[img.id]) return `photos/h_${img.id}.webp`;
+      if (img.type === 'balloon') return `photos/b_${COLOUR_KEYS[img.ci]}.webp`;
+    }
+    if (img.type === 'monkey') return MONKEY_URI[img.id];
+    if (img.type === 'needle') return svgURI(cursorSVG(NEEDLES[img.i]));
+    if (img.type === 'mhat') return svgURI(monkeySVG(MODEL_LOOK, img.id));
+    return svgURI(balloonMini(img.ci, img.hat));
+  }
+  // Torn newspaper edges, shared by every clipping.
+  const EDGES = [0, 1, 2].map(() => {
+    const top = [], bot = [];
+    for (let x = 0; x <= 100; x += 4) { top.push(`${x}% ${(Math.random() * 1.6).toFixed(2)}%`); bot.push(`${100 - x}% ${(98.4 + Math.random() * 1.6).toFixed(2)}%`); }
+    return `polygon(${top.join(',')},${bot.join(',')})`;
+  });
+  const LABEL = { complaint: 'Complaint', union: 'Union', event: 'Event' };
+  const side = $('side'), sideTab = $('sideTab');
+  function renderSide() {
+    const badge = $('sideBadge');
+    badge.hidden = !S.unread; badge.textContent = S.unread > 99 ? '99+' : S.unread;
+    $('unionPill').textContent = unionName();
+    const bar = $('relBar');
+    bar.style.width = S.rel + '%';
+    bar.style.background = S.rel < 25 ? '#d6453d' : S.rel < 60 ? '#e0a82a' : '#2fb85a';
+    $('relName').textContent = `${relName()} (${Math.round(S.rel)})`;
+    if (!side.classList.contains('open')) return;
+    $('feedList').innerHTML = S.feed.length ? S.feed.map(f => `<li>
+        <img src="${MONKEY_URI[f.id] || mysteryURI()}" alt="">
+        <div><span class="tag ${f.kind}">${LABEL[f.kind]}</span><p>${esc(f.text)}</p><time>${ago(f.t)}</time></div></li>`).join('')
+      : `<li class="empty">All quiet. Hire some monkeys and they'll start complaining soon.</li>`;
+    $('tagline').textContent = `All the news that's fit to pop · Day ${day()}`;
+    $('newsList').innerHTML = S.news.map((n, i) => `<div class="clip-wrap"><article class="clip" style="--rot:${n.rot}deg;--edge:${EDGES[i % 3]}">
+        <div class="dateline"><span>Pop City</span><span>${ago(n.t)}</span></div>
+        <h4>${esc(n.h)}</h4>
+        <figure><img src="${articleImg(n.img)}" alt=""><figcaption>${esc(n.c)}</figcaption></figure>
+        <p>${esc(n.b)}</p></article></div>`).join('');
+  }
+  function toggleSide(open) {
+    side.classList.toggle('open', open);
+    side.inert = !open;
+    sideTab.setAttribute('aria-expanded', String(open));
+    if (open) { S.unread = 0; renderSide(); $('sideClose').focus(); save(); } else { renderSide(); sideTab.focus(); }
+  }
+  sideTab.addEventListener('click', () => toggleSide(!side.classList.contains('open')));
+  $('sideClose').addEventListener('click', () => toggleSide(false));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && side.classList.contains('open') && $('settings').hidden) toggleSide(false); });
+
+  // ---------- Backgrounds ----------
+  const leaf = (x, y, r, sc, c) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${sc})"><path d="M0 0 C40 -60 140 -60 200 0 C140 40 40 40 0 0 Z" fill="${c}"/><path d="M0 0 L190 0" stroke="rgba(0,0,0,0.25)" stroke-width="3"/></g>`;
+  const palm = (x, f) => `<path d="M${x} 640 Q${x + 30 * f} 470 ${x + 70 * f} 330" stroke="#7a5230" stroke-width="18" fill="none" stroke-linecap="round"/>` +
+    [[-120, 20], [-90, -60], [0, -90], [90, -50], [130, 30]].map(([dx, dy]) =>
+      `<path d="M${x + 70 * f} 330 q ${dx * 0.5} ${dy - 30} ${dx} ${dy + 40}" stroke="#2f8a3c" stroke-width="16" fill="none" stroke-linecap="round"/>`).join('');
+  let waves = 'M0 470';
+  for (let x = 0; x < 1200; x += 60) waves += ` q 30 -12 60 0`;
+  const WRAP = inner => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">${inner}</svg>`;
+  const BEACH = WRAP(`<defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6ec6ff"/><stop offset="1" stop-color="#ffe3b3"/></linearGradient></defs>
+    <rect width="1200" height="800" fill="url(#s)"/><circle cx="930" cy="170" r="110" fill="#fff3b0" opacity="0.3"/><circle cx="930" cy="170" r="70" fill="#fff3b0"/>
+    <rect y="470" width="1200" height="140" fill="#2aa7c9"/><path d="${waves} L1200 490 L0 490 Z" fill="#7ad6ea"/>
+    <path d="M0 600 Q300 560 600 590 T1200 580 L1200 800 L0 800 Z" fill="#f2d49b"/>${palm(110, 1)}${palm(1090, -1)}`);
+  const JUNGLE = WRAP(`<defs><linearGradient id="j" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f9b5c"/><stop offset="1" stop-color="#12391f"/></linearGradient></defs>
+    <rect width="1200" height="800" fill="url(#j)"/>
+    <polygon points="500,0 620,0 900,800 700,800" fill="#fff" opacity="0.06"/><polygon points="760,0 820,0 1100,800 980,800" fill="#fff" opacity="0.05"/>
+    ${[80, 260, 940, 1110].map((x, i) => `<path d="M${x} 0 Q${x + 30} 200 ${x - 10} ${300 + i * 60}" stroke="#1f5c2e" stroke-width="7" fill="none"/>`).join('')}
+    ${leaf(-40, 120, 20, 1.2, '#1e6b34')}${leaf(-60, 300, -10, 1.4, '#2c8a45')}${leaf(-30, 620, -30, 1.6, '#175a2b')}${leaf(40, 780, -60, 1.5, '#1e6b34')}
+    ${leaf(1240, 90, 160, 1.3, '#2c8a45')}${leaf(1260, 330, 190, 1.5, '#1e6b34')}${leaf(1230, 640, 210, 1.6, '#175a2b')}${leaf(1150, 800, 240, 1.4, '#2c8a45')}
+    ${leaf(420, -40, 70, 1.1, '#175a2b')}${leaf(760, -50, 110, 1.1, '#1e6b34')}`);
+  let stars = '';
+  for (let i = 0; i < 170; i++) stars += `<circle cx="${(Math.random() * 1200).toFixed(0)}" cy="${(Math.random() * 800).toFixed(0)}" r="${(0.6 + Math.random() * 1.4).toFixed(1)}" fill="#fff" opacity="${(0.4 + Math.random() * 0.6).toFixed(2)}"/>`;
+  const SPACE = WRAP(`<defs><linearGradient id="k" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070a1f"/><stop offset="1" stop-color="#1a1248"/></linearGradient>
+    <radialGradient id="neb"><stop offset="0" stop-color="#9b4dff" stop-opacity="0.35"/><stop offset="1" stop-color="#9b4dff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="pl" cx="0.35" cy="0.35"><stop offset="0" stop-color="#ffc78a"/><stop offset="1" stop-color="#b3541e"/></radialGradient></defs>
+    <rect width="1200" height="800" fill="url(#k)"/><ellipse cx="300" cy="560" rx="380" ry="200" fill="url(#neb)"/>${stars}
+    <circle cx="1000" cy="160" r="70" fill="url(#pl)"/><ellipse cx="1000" cy="160" rx="120" ry="22" fill="none" stroke="#f1d3a8" stroke-width="6" opacity="0.8" transform="rotate(-15 1000 160)"/>
+    <circle cx="170" cy="130" r="22" fill="#d9dce6"/><circle cx="163" cy="124" r="5" fill="#b8bccb"/>`);
+  const BGS = {
+    plain: '',
+    sky: `radial-gradient(ellipse 30% 12% at 20% 22%, rgba(255,255,255,0.9), transparent 70%), radial-gradient(ellipse 25% 10% at 78% 35%, rgba(255,255,255,0.85), transparent 70%), radial-gradient(ellipse 35% 12% at 60% 12%, rgba(255,255,255,0.7), transparent 70%), radial-gradient(ellipse 30% 10% at 30% 70%, rgba(255,255,255,0.6), transparent 70%), linear-gradient(#5aa9f0, #bfe3ff 70%, #e8f6ff)`,
+    beach: `url("${svgURI(BEACH)}") center / cover no-repeat`,
+    jungle: `url("${svgURI(JUNGLE)}") center / cover no-repeat`,
+    circus: `radial-gradient(ellipse at 50% 110%, transparent 30%, rgba(0,0,0,0.35) 90%), repeating-conic-gradient(from 180deg at 50% -25%, #c8202a 0deg 5deg, #f6ecd6 5deg 10deg)`,
+    space: `url("${svgURI(SPACE)}") center / cover no-repeat`,
+  };
+  document.querySelectorAll('[data-sw]').forEach(el => { if (BGS[el.dataset.sw]) el.style.background = BGS[el.dataset.sw]; });
+  function applyBackground() {
+    const bg = BGS[S.opt.bg] ? S.opt.bg : 'plain';
+    $('bg').style.background = BGS[bg] || 'none';
+    document.body.classList.toggle('has-bg', bg !== 'plain');
+  }
+  function updateStats() {
+    $('stPopped').textContent = fmt(S.total);
+    $('stMonkeys').textContent = totalMonkeys().toLocaleString('en-GB');
+    $('stClicks').textContent = S.clicks.toLocaleString('en-GB');
+    $('stPps').textContent = fmt(pps(), true);
+    $('stDays').textContent = day();
+    $('stUnion').textContent = unionName();
+    $('stRel').textContent = `${Math.round(S.rel)} · ${relName()}`;
+  }
+
+  // ---------- Settings menu ----------
+  const modal = $('settings');
+  function syncSettings() {
+    const vals = { style: S.opt.style, needles: S.opt.needles, real: S.opt.real ? 'on' : 'off', bg: S.opt.bg,
+      music: S.music ? 'on' : 'off', sound: S.sound ? 'on' : 'off' };
+    updateStats();
+    modal.querySelectorAll('[data-opt]').forEach(seg => seg.querySelectorAll('button')
+      .forEach(b => b.setAttribute('aria-pressed', String(b.dataset.val === vals[seg.dataset.opt]))));
+    showTrack();
+  }
+  function applyLook() {
+    document.body.classList.toggle('real', !!S.opt.real);
+    if (!S.opt.real && S.opt.style === 'body') init3D();
+    if (S.opt.real) ['n' + S.needle, 'b_' + COLOUR_KEYS[S.look]].forEach(photo);
+    applyColour(); applyHat();
+    buildMonkeyImages(); applyNeedle(); applyBackground(); renderRow(); renderCrew(); renderSide();
+  }
+  function openSettings() { syncSettings(); modal.hidden = false; $('setClose').focus(); }
+  function closeSettings() { modal.hidden = true; $('settingsBtn').focus(); }
+  $('settingsBtn').addEventListener('click', openSettings);
+  $('setClose').addEventListener('click', closeSettings);
+  modal.addEventListener('click', e => { if (e.target === modal) closeSettings(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) closeSettings(); });
+  modal.querySelectorAll('[data-opt]').forEach(seg => seg.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const key = seg.dataset.opt, val = b.dataset.val;
+    if (key === 'music') { S.music = val === 'on'; if (S.music) startMusic(); else stopMusic(); }
+    else if (key === 'sound') S.sound = val === 'on';
+    else if (key === 'real') { S.opt.real = val === 'on'; applyLook(); }
+    else { S.opt[key] = val; applyLook(); }
+    syncSettings(); save();
+  }));
+  $('nextTrack').addEventListener('click', () => { initAudio(); nextTrack(); });
+  $('credits').innerHTML = CREDITS.map(([what, who, lic, url]) =>
+    `<li><a href="${esc(url)}" target="_blank" rel="noopener">${esc(what)}</a>: ${esc(who)}, ${esc(lic)}</li>`).join('');
+  const resetBtn = $('resetBtn');
+  let resetArmed = null;
+  resetBtn.addEventListener('click', () => {
+    if (!resetArmed) {
+      resetBtn.textContent = 'Tap again to wipe'; resetBtn.classList.add('warn');
+      resetArmed = setTimeout(() => { resetArmed = null; resetBtn.textContent = 'Reset game'; resetBtn.classList.remove('warn'); }, 3000);
+      return;
+    }
+    clearTimeout(resetArmed); resetArmed = null;
+    resetBtn.textContent = 'Reset game'; resetBtn.classList.remove('warn');
+    const { sound, music, opt } = S;
+    S = migrate(fresh()); S.sound = sound; S.music = music; S.opt = opt;
+    applyAll(); save(); closeSettings(); toast('Fresh start. One sewing pin and a red balloon.');
+  });
+
+  // ---------- Loop ----------
+  function updateHeader() {
+    popsEl.textContent = fmt(S.pops);
+    ppsEl.textContent = fmt(pps(), true);
+    ppcEl.textContent = fmt(perClick());
+    multEl.textContent = '×' + mult() + ' ' + COLOURS[S.colour].name;
+    const wm = workerMult(), chip = $('boostChip');
+    chip.hidden = Math.abs(wm - 1) < 0.01;
+    chip.className = wm >= 1 ? 'up' : 'down';
+    $('boostVal').textContent = '×' + wm.toFixed(2);
+  }
+  let last = performance.now(), sinceRefresh = 0, sinceMini = 0, sinceSave = 0, sinceFeed = 0;
+  function frame(now) {
+    const dt = Math.min((now - last) / 1000, 1); last = now;
+    const rate = pps();
+    const g = rate * dt;
+    S.pops += g; S.total += g;
+    sinceRefresh += dt; sinceMini += dt; sinceSave += dt;
+    if (sinceRefresh > 0.25) { sinceRefresh = 0; refresh(); }
+    if (sinceMini > 1 && rate > 0) {
+      sinceMini = 0;
+      const spot = monkeySpots[Math.floor(Math.random() * monkeySpots.length)];
+      if (spot) floatText(spot.x, spot.y - 26, '+' + fmt(rate, true), true);
+    }
+    if (sinceSave > 5) { sinceSave = 0; save(); }
+    sinceFeed += dt;
+    if (sinceFeed > 1) { sinceFeed = 0; feedTick(); if (!modal.hidden) updateStats(); }
+    updateHeader();
+    decisionTick();
+    cx.clearRect(0, 0, innerWidth, innerHeight);
+    drawCrew(dt, now);
+    drawParts();
+    requestAnimationFrame(frame);
+  }
+
+  let hiddenAt = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { hiddenAt = Date.now(); save(); stopMusic(); }
+    else if (hiddenAt) {
+      const secs = Math.min((Date.now() - hiddenAt) / 1000, 7200), earned = pps() * secs;
+      if (earned > 0) { S.pops += earned; S.total += earned; }
+      hiddenAt = 0; last = performance.now();
+      if (S.music && actx) startMusic();
+    }
+  });
+  addEventListener('pagehide', save);
+
+  function applyAll() {
+    applyColour(); applyHat(); applyLook();
+    syncSettings(); updateHeader();
+  }
+
+  function start(data) {
+    const fromHot = data && data.S;
+    S = fromHot ? migrate(data.S) : load();
+    try { const t = localStorage.getItem(KEY + '-tab'); if (t) tab = t; } catch (e) {}
+    document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x.dataset.tab === tab));
+    resize();
+    applyAll();
+    if (!fromHot && S.total > 0) {
+      const secs = Math.min((Date.now() - S.t) / 1000, 7200), earned = pps() * secs;
+      if (secs > 10 && earned >= 1) {
+        S.pops += earned; S.total += earned;
+        toast(`While you were away, your monkeys popped ${fmt(earned)} balloons.`);
+      }
+    }
+    requestAnimationFrame(t => { last = t; requestAnimationFrame(frame); });
+  }
+
+  window.claude?.hot?.snapshot?.(() => ({ S }));
+  const hot = window.claude?.hot;
+  if (hot?.ready) hot.ready(start); else start(hot?.data ?? {});
+})();
+</script>
+
+</body>
+</html>
