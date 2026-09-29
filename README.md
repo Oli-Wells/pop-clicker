@@ -1,3 +1,9 @@
+This is a project by me testing AI prompting for a game using Claude AI Opus 5.5. This is just a fun project to see how much of a game I could actually create and this all took a couple of hours. Non of this code was produced by hand, everything is AI generated. SOme bugs will naturally be present but please test and let me know what works and what doesn't.<br/>
+
+Many thanks<br/>
+Oli
+
+# AI SUMMARY:
 # Pop Clicker
 
 A balloon-popping idle game in a single web page. Pop the balloon with an ever-sharper needle, hire monkeys that
