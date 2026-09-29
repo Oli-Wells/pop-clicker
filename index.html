@@ -307,6 +307,11 @@
   .blimp svg { width: 150px; height: 64px; flex: none; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.25)); }
   .blimp .rope { width: 26px; height: 2px; background: #6b7280; flex: none; }
   .blimp .banner { background: #fffbe8; color: #2a2418; border: 2px solid #c8202a; border-radius: 4px; padding: 6px 14px; font-family: "Playfair Display", Georgia, serif; font-weight: 900; font-size: 15px; letter-spacing: 0.03em; text-transform: uppercase; white-space: nowrap; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
+  .blimp.gold.rtl, .blimp.gold.ltr { animation-duration: 12s; }
+  .blimp.gold .banner { background: #fff3b0; border-color: #c99400; color: #5a3500; animation: gold-pulse 1s ease-in-out infinite; }
+  .blimp.gold svg { filter: drop-shadow(0 0 10px #f5c518) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.3)); }
+  @keyframes gold-pulse { 50% { box-shadow: 0 4px 18px #f5c518; } }
+  @media (prefers-reduced-motion: reduce) { .blimp.gold .banner { animation: none; } }
   @keyframes fly-rtl { to { transform: translateX(calc(-100vw - 100%)); } }
   @keyframes fly-ltr { to { transform: translateX(calc(100vw + 100%)); } }
 
@@ -1007,7 +1012,12 @@
   const MHP = { party: [0.7, 0.1], banana: [0.8, 0.25], fez: [0.9, 0.14], pirate: [1.5, 0.22], viking: [1.1, 0.45], wizard: [1.4, 0.16],
     crown: [0.95, 0.16], tophat: [1.0, 0.12], cowboy: [1.5, 0.22], beanie: [1.1, 0.42], hardhat: [1.15, 0.36], headphones: [1.25, 0.75],
     sombrero: [1.9, 0.22], beret: [1.2, 0.32] };
-  const CREDITS = [["Baby Monkey", "Kalyan Varma", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3ABaby_macaque_DSC_8412.jpg"], ["Spider Monkey", "Charles J. Sharp", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3AGeoffroy%27s_spider_monkey_%28Ateles_geoffroyi_yucatanensis%29_male_Peten.jpg"], ["Snow Monkey", "Lorie Shaull", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3AJapanese_macaque_also_called_snow_monkey_01.jpg"], ["Golden Monkey", "Giovanni Mari", "CC BY-SA 2.0", "https://commons.wikimedia.org/wiki/File%3AGolden_Snub-nosed_Monkeys%2C_Qinling_Mountains_-_China.jpg"], ["Dart Monkey", "David M. Jensen (Storkk)", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3ACapuchin_Costa_Rica.jpg"], ["Ninja Monkey", "WeaponizingArchitecture", "CC0", "https://commons.wikimedia.org/wiki/File%3AMacaca_nigra_self-portrait_transparent.png"], ["Orangutan Ace", "Malene Thyssen", "CC BY 2.5", "https://commons.wikimedia.org/wiki/File%3APongo_pygmaeus_%28orangutang%29.jpg"], ["Space Monkey (Miss Baker, NASA)", "NASA/Marshall Space Flight Center", "Public domain", "https://commons.wikimedia.org/wiki/File%3AMiss_Baker%2C_the_squirrel_monkey.jpg"], ["Party photo", "Polylerus at English Wikipedia", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3APartyhat.JPG"], ["Beanie photo", "Menswear Market", "CC BY 2.0", "https://commons.wikimedia.org/wiki/File%3ABeanie_hat_by_Polo_Ralph_Lauren.jpg"], ["Propeller photo", "Gabitgay", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3APropeller_Hat.jpg"], ["Cowboy photo", "RandomKatze", "CC0", "https://commons.wikimedia.org/wiki/File%3AWhite_cowboy_hat_from_Calgary.jpg"], ["Top hat photo", "Nikodem Nijaki", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3ACollapsible_top_hat_IMGP9692.jpg"], ["Bowler photo", "Peloponnesian Folklore Foundation", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3ABowler_hat%2C_Vienna%2C_mid-20th_century.jpg"], ["Beret photo", "Unknown", "CC0", "https://commons.wikimedia.org/wiki/File%3ABeret_MET_53.4.1_CP1.jpg"], ["Sombrero photo", "لا روسا", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3AMexican_Sombrero_00_%288%29.JPG"], ["Fez photo", "Édouard Hue (User:EdouardHue)", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3AFez.jpg"], ["Pirate photo", "Unknown", "CC0", "https://commons.wikimedia.org/wiki/File%3ATricorne_MET_260003.jpg"], ["Wizard photo", "Evan Swigart from Chicago, USA", "CC BY 2.0", "https://commons.wikimedia.org/wiki/File%3AHalloween_pumpkin_witch_hat_-_Evan_Swigart.jpg"], ["Crown photo", "Hwap.official", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3ARussian_Crown_Jewel_Replica.jpg"], ["Viking photo", "Marieke Kuijjer", "CC BY-SA 2.0", "https://commons.wikimedia.org/wiki/File%3AViking_helmet.jpg"], ["Hard hat photo", "Batholith (talk)", "Public domain", "https://commons.wikimedia.org/wiki/File%3AHard_hat_20111111.jpg"], ["Headphones photo", "Sprinno", "CC0", "https://commons.wikimedia.org/wiki/File%3AHeadphones_on_white_background.jpg"], ["Banana photo", "Filo gèn'", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3ABanana_on_whitebackground.jpg"], ["Pins", "Pavel Krok", "CC BY-SA 2.5", "https://commons.wikimedia.org/wiki/File%3AStraight_pin.jpg"], ["Needles", "User: MrX", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3ASewing_needle.png"], ["Knitting needle, cactus spine and quill (tinted)", "Pschemp", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3AStraight_knitting_needles.JPG"], ["Balloons (all colours, recoloured)", "liz west from Boxborough, MA, USA", "CC BY 2.0", "https://commons.wikimedia.org/wiki/File:Balloons_cutout_(10464445726).png"]];
+  const CREDITS = [["Baby Monkey", "Kalyan Varma", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3ABaby_macaque_DSC_8412.jpg"], ["Spider Monkey", "Charles J. Sharp", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3AGeoffroy%27s_spider_monkey_%28Ateles_geoffroyi_yucatanensis%29_male_Peten.jpg"], ["Snow Monkey", "Lorie Shaull", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3AJapanese_macaque_also_called_snow_monkey_01.jpg"], ["Golden Monkey", "Giovanni Mari", "CC BY-SA 2.0", "https://commons.wikimedia.org/wiki/File%3AGolden_Snub-nosed_Monkeys%2C_Qinling_Mountains_-_China.jpg"], ["Dart Monkey", "David M. Jensen (Storkk)", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3ACapuchin_Costa_Rica.jpg"], ["Ninja Monkey", "WeaponizingArchitecture", "CC0", "https://commons.wikimedia.org/wiki/File%3AMacaca_nigra_self-portrait_transparent.png"], ["Orangutan Ace", "Malene Thyssen", "CC BY 2.5", "https://commons.wikimedia.org/wiki/File%3APongo_pygmaeus_%28orangutang%29.jpg"], ["Space Monkey (Miss Baker, NASA)", "NASA/Marshall Space Flight Center", "Public domain", "https://commons.wikimedia.org/wiki/File%3AMiss_Baker%2C_the_squirrel_monkey.jpg"], ["Party photo", "Polylerus at English Wikipedia", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3APartyhat.JPG"], ["Beanie photo", "Menswear Market", "CC BY 2.0", "https://commons.wikimedia.org/wiki/File%3ABeanie_hat_by_Polo_Ralph_Lauren.jpg"], ["Propeller photo", "Gabitgay", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3APropeller_Hat.jpg"], ["Cowboy photo", "RandomKatze", "CC0", "https://commons.wikimedia.org/wiki/File%3AWhite_cowboy_hat_from_Calgary.jpg"], ["Top hat photo", "Nikodem Nijaki", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3ACollapsible_top_hat_IMGP9692.jpg"], ["Bowler photo", "Peloponnesian Folklore Foundation", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3ABowler_hat%2C_Vienna%2C_mid-20th_century.jpg"], ["Beret photo", "Unknown", "CC0", "https://commons.wikimedia.org/wiki/File%3ABeret_MET_53.4.1_CP1.jpg"], ["Sombrero photo", "لا روسا", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3AMexican_Sombrero_00_%288%29.JPG"], ["Fez photo", "Édouard Hue (User:EdouardHue)", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3AFez.jpg"], ["Pirate photo", "Unknown", "CC0", "https://commons.wikimedia.org/wiki/File%3ATricorne_MET_260003.jpg"], ["Wizard photo", "Evan Swigart from Chicago, USA", "CC BY 2.0", "https://commons.wikimedia.org/wiki/File%3AHalloween_pumpkin_witch_hat_-_Evan_Swigart.jpg"], ["Crown photo", "Hwap.official", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3ARussian_Crown_Jewel_Replica.jpg"], ["Viking photo", "Marieke Kuijjer", "CC BY-SA 2.0", "https://commons.wikimedia.org/wiki/File%3AViking_helmet.jpg"], ["Hard hat photo", "Batholith (talk)", "Public domain", "https://commons.wikimedia.org/wiki/File%3AHard_hat_20111111.jpg"], ["Headphones photo", "Sprinno", "CC0", "https://commons.wikimedia.org/wiki/File%3AHeadphones_on_white_background.jpg"], ["Banana photo", "Filo gèn'", "CC BY-SA 4.0", "https://commons.wikimedia.org/wiki/File%3ABanana_on_whitebackground.jpg"], ["Pins", "Pavel Krok", "CC BY-SA 2.5", "https://commons.wikimedia.org/wiki/File%3AStraight_pin.jpg"], ["Needles", "User: MrX", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3ASewing_needle.png"], ["Knitting needle, cactus spine and quill (tinted)", "Pschemp", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File%3AStraight_knitting_needles.JPG"], ["Balloons (all colours, recoloured)", "liz west from Boxborough, MA, USA", "CC BY 2.0", "https://commons.wikimedia.org/wiki/File:Balloons_cutout_(10464445726).png"],
+    ["Sky background photo", "Alexandru Panoiu", "CC BY 2.0", "https://commons.wikimedia.org/wiki/File:Blue_Sky_with_Clouds_Wallpaper_(5080737587).jpg"],
+    ["Beach background photo", "Jon Sullivan", "Public domain", "https://commons.wikimedia.org/wiki/File:Palm_trees_tropical_beach.jpg"],
+    ["Jungle background photo", "Ben Sutherland", "CC BY 2.0", "https://commons.wikimedia.org/wiki/File:Rainforest_canopy.jpg"],
+    ["Circus background photo", "Ashtoncircus", "CC BY-SA 3.0", "https://commons.wikimedia.org/wiki/File:BIG_TOP.jpg"],
+    ["Space background photo", "NASA, ESA, J. Hester and A. Loll (Arizona State University)", "Public domain", "https://commons.wikimedia.org/wiki/File:Crab_Nebula.jpg"]];
   const PIMG = {};
   function photo(name) {
     if (!PIMG[name]) { const i = new Image(); i.decoding = 'async'; i.src = `photos/${name}.webp`; PIMG[name] = i; }
@@ -1985,7 +1995,11 @@
     const b = balloon.getBoundingClientRect();
     const bcx = b.left + b.width / 2, bcy = b.top + b.height * 0.56, brx = b.width * 0.4, bry = b.height * 0.278;
     if (!$('ascent').hidden) return;
-    const t = now / 1000, speedScale = reduceMotion ? 0.15 : 1;
+    const t = now / 1000;
+    // A golden-blimp pop rush visibly speeds the whole crew up, on top of its output multiplier.
+    const rushOn = S.boosts.some(bst => bst.kind === 'rush' && bst.until > Date.now());
+    const rushMult = rushOn ? 2.2 : 1;
+    const speedScale = (reduceMotion ? 0.15 : 1) * rushMult;
     const onStrike = S.boosts.some(bst => bst.kind === 'strike' && bst.until > Date.now());
     const orbit = MINIONS.filter(m => m.role === 'orbit' && S.minions[m.id]);
     const throwers = MINIONS.filter(m => m.role === 'throw' && S.minions[m.id]);
@@ -2014,7 +2028,7 @@
         const front = depth > 0;
         let jabbing = false;
         const striking = onStrike && j % 2 === 1;
-        if (front && t > st.next && !striking) { st.jab = 0.22; st.next = t + 1.2 + Math.random() * 2.2; jabbing = true; }
+        if (front && t > st.next && !striking) { st.jab = 0.22; st.next = t + (1.2 + Math.random() * 2.2) / rushMult; jabbing = true; }
         if (st.jab > 0) {
           st.jab -= dt;
           x += (bcx - x) * Math.sin(Math.PI * (1 - st.jab / 0.22)) * 0.18;
@@ -2055,7 +2069,7 @@
         if (mode === 'photo') hit = drawPhotoMonkey(cx, m.id, x, y, size * (1 + st.kick * 0.5), side < 0 ? 1 : -1, bcx, yRow, gold);
         else hit = drawMonkey(cx, m.id, x, y, size * (1 + st.kick * 0.8), side > 0 ? -1 : 1, bcx, yRow, gold);
         if (t > st.next && !(onStrike && j % 2 === 1)) {
-          st.next = t + m.every * (0.8 + Math.random() * 0.4); st.kick = 0.18;
+          st.next = t + m.every * (0.8 + Math.random() * 0.4) / rushMult; st.kick = 0.18;
           const tx = bcx + (Math.random() - 0.5) * brx, ty = bcy + (Math.random() - 0.5) * bry;
           for (let d = 0; d < m.darts; d++) {
             const spread = (d - (m.darts - 1) / 2) * 26;
@@ -2409,6 +2423,36 @@
     <path d="M6 30 H126" stroke="#c8202a" stroke-width="5"/>
     <text x="64" y="23" text-anchor="middle" font-family="Fredoka, Arial Rounded MT Bold, sans-serif" font-weight="700" font-size="12" fill="#1c1f2b">POP NEWS</text>
     <rect x="50" y="48" width="30" height="10" rx="3" fill="#3a3f52"/><circle cx="58" cy="53" r="1.6" fill="#ffe27a"/><circle cx="65" cy="53" r="1.6" fill="#ffe27a"/><circle cx="72" cy="53" r="1.6" fill="#ffe27a"/></svg>`;
+  const GOLD_BLIMP_SVG = `<svg viewBox="0 0 150 64" aria-hidden="true"><defs><linearGradient id="gblg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset="0.55" stop-color="#f5c518"/><stop offset="1" stop-color="#c99400"/></linearGradient></defs>
+    <path d="M118 20 L146 5 L143 25 Z" fill="#a3141f"/><path d="M118 34 L146 51 L143 32 Z" fill="#a3141f"/>
+    <ellipse cx="66" cy="28" rx="63" ry="22" fill="url(#gblg)" stroke="#8a6400" stroke-width="1.2"/>
+    <path d="M6 30 H126" stroke="#a3141f" stroke-width="5"/>
+    <text x="64" y="23" text-anchor="middle" font-family="Fredoka, Arial Rounded MT Bold, sans-serif" font-weight="700" font-size="11" fill="#5a3500">POP RUSH</text>
+    <rect x="50" y="48" width="30" height="10" rx="3" fill="#8a6400"/><circle cx="58" cy="53" r="1.6" fill="#fff3b0"/><circle cx="65" cy="53" r="1.6" fill="#fff3b0"/><circle cx="72" cy="53" r="1.6" fill="#fff3b0"/></svg>`;
+  // A rare golden blimp: tapping it triggers a short, intense pop rush (big multiplier, faster crew).
+  const RUSH_MULT = 4, RUSH_SECS = 30;
+  let nextGoldBlimpAt = Date.now() + (200 + Math.random() * 300) * 1000;
+  function maybeSpawnGoldBlimp(now) {
+    if (now < nextGoldBlimpAt) return;
+    nextGoldBlimpAt = now + (360 + Math.random() * 480) * 1000;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'blimp gold ' + (Math.random() < 0.5 ? 'ltr' : 'rtl');
+    b.setAttribute('aria-label', 'A golden blimp! Tap for a pop rush.');
+    b.innerHTML = `${GOLD_BLIMP_SVG}<span class="rope"></span><span class="banner">Pop rush - tap me!</span>`;
+    const done = () => b.remove();
+    if (reduceMotion) setTimeout(done, 12000); else b.addEventListener('animationend', done);
+    b.addEventListener('click', () => {
+      const r = b.getBoundingClientRect(), cx2 = r.left + r.width / 2, cy2 = r.top + r.height / 2;
+      S.boosts = S.boosts.filter(x => x.kind !== 'rush');
+      S.boosts.push({ mult: RUSH_MULT, until: Date.now() + RUSH_SECS * 1000, kind: 'rush', click: true });
+      burst(cx2, cy2, 24);
+      floatText(cx2, cy2, `POP RUSH ×${RUSH_MULT}!`);
+      toast(`Pop rush! Everything is ${RUSH_MULT}× faster for ${RUSH_SECS}s.`);
+      autoPop(0.5);
+      b.remove();
+    });
+    $('blimps').appendChild(b);
+  }
   const blimpQ = [];
   let blimpOn = false;
   function blimp(text) { blimpQ.push(text); if (!blimpOn) nextBlimp(); }
@@ -2721,10 +2765,18 @@
     circus: `radial-gradient(ellipse at 50% 110%, transparent 30%, rgba(0,0,0,0.35) 90%), repeating-conic-gradient(from 180deg at 50% -25%, #c8202a 0deg 5deg, #f6ecd6 5deg 10deg)`,
     space: `url("${svgURI(SPACE)}") center / cover no-repeat`,
   };
+  // Photorealistic versions swap the drawn/CSS scenery for real photographs (credits at the bottom).
+  const BGS_REAL = {
+    sky: `url("photos/bg_sky.webp") center / cover no-repeat`,
+    beach: `url("photos/bg_beach.webp") center / cover no-repeat`,
+    jungle: `url("photos/bg_jungle.webp") center / cover no-repeat`,
+    circus: `url("photos/bg_circus.webp") center / cover no-repeat`,
+    space: `url("photos/bg_space.webp") center / cover no-repeat`,
+  };
   document.querySelectorAll('[data-sw]').forEach(el => { if (BGS[el.dataset.sw]) el.style.background = BGS[el.dataset.sw]; });
   function applyBackground() {
     const bg = BGS[S.opt.bg] ? S.opt.bg : 'plain';
-    $('bg').style.background = BGS[bg] || 'none';
+    $('bg').style.background = (S.opt.real && BGS_REAL[bg]) || BGS[bg] || 'none';
     $('bg').className = 'bg-' + bg;
     document.body.classList.toggle('has-bg', bg !== 'plain');
   }
@@ -2831,7 +2883,7 @@
     }
     if (sinceSave > 5) { sinceSave = 0; save(); }
     sinceFeed += dt;
-    if (sinceFeed > 1) { sinceFeed = 0; feedTick(); maybeSpawnCameo(Date.now()); if (!modal.hidden) updateStats(); }
+    if (sinceFeed > 1) { sinceFeed = 0; feedTick(); maybeSpawnCameo(Date.now()); maybeSpawnGoldBlimp(Date.now()); if (!modal.hidden) updateStats(); }
     updateHeader();
     decisionTick();
     cx.clearRect(0, 0, innerWidth, innerHeight);
