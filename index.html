@@ -80,12 +80,12 @@
   /* Header */
   header { display: grid; gap: 4px; padding-block: 12px 0; }
   .topbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
-  .brand { font-size: 22px; margin: 0; }
+  .brand { font-size: 30px; margin: 0; }
   .tools { display: flex; gap: 8px; }
   .tool {
-    font: inherit; font-size: 14px; font-weight: 700;
+    font: inherit; font-size: 16px; font-weight: 700;
     color: var(--muted); background: transparent; border: 1px solid var(--line);
-    border-radius: 999px; padding: 6px 12px; cursor: pointer;
+    border-radius: 999px; padding: 8px 16px; cursor: pointer;
   }
   .tool:hover { color: var(--ink); border-color: var(--muted); }
   .tool.warn { color: var(--accent); border-color: var(--accent); }
@@ -184,12 +184,21 @@
   .seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px var(--shadow); }
   .seg button:focus-visible, .icon-btn:focus-visible, .tool:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
   .note { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.45; }
+  .vol { width: 140px; max-width: 45vw; accent-color: var(--accent); }
   .np { display: flex; align-items: center; gap: 10px; }
 
   .modal[hidden], #ascent[hidden], #toast[hidden] { display: none; }
 
   /* Backgrounds */
-  #bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+  #bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+  #bg.bg-sky { animation: cloud-drift 50s ease-in-out infinite alternate; }
+  @keyframes cloud-drift {
+    from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
+    to { background-position: 0 0, 70px 4px, -55px -6px, 45px 5px, -40px -4px, 60px 3px, 0 0; }
+  }
+  #bg.bg-circus { transform: scale(1.5); animation: bg-spin 90s linear infinite; }
+  @keyframes bg-spin { to { transform: scale(1.5) rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { #bg.bg-sky, #bg.bg-circus { animation: none; } }
   .has-bg .brand, .has-bg .score { background: var(--veil); border-radius: 14px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
   .has-bg .brand { padding: 4px 12px; }
   .has-bg .score { justify-self: center; padding: 6px 18px; }
@@ -234,7 +243,7 @@
   .feed time { font-size: 12px; color: var(--muted); }
   .feed li.empty { display: block; color: var(--muted); font-size: 14px; }
   .tag { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; color: #fff; }
-  .tag.complaint { background: #d6453d; } .tag.union { background: #6b47c9; } .tag.event { background: #c98a12; }
+  .tag.complaint { background: #d6453d; } .tag.union { background: #6b47c9; } .tag.event { background: #c98a12; } .tag.sighting { background: #1f8a45; }
   .masthead { text-align: center; font-family: "Playfair Display", Georgia, serif; font-weight: 900; font-size: 30px; line-height: 1; padding-block: 8px 4px; border-top: 3px double var(--ink); border-bottom: 1px solid var(--ink); }
   .tagline { text-align: center; font-family: "Libre Baskerville", Georgia, serif; font-style: italic; font-size: 12px; color: var(--muted); margin: 6px 0 14px; }
   .clips { display: grid; gap: 18px; }
@@ -260,8 +269,6 @@
   body.real #balloon svg { filter: drop-shadow(0 22px 22px rgba(0, 0, 0, 0.28)); }
   body.real .stage { background: radial-gradient(ellipse 60% 55% at 50% 48%, var(--spot), transparent 72%); }
 
-  /* 3D monkeys */
-  canvas#m3d { z-index: 4; }
   .card .art img.nphoto { width: 96px; height: auto; max-height: 20px; transform: rotate(-18deg); margin-top: 8px; }
 
   /* Union choices */
@@ -292,16 +299,31 @@
 
   /* News blimps */
   #blimps { position: fixed; left: 0; right: 0; top: calc(env(safe-area-inset-top, 0px) + 58px); height: 76px; z-index: 8; pointer-events: none; overflow: hidden; }
-  .blimp { position: absolute; top: 4px; left: 100%; display: flex; align-items: center; pointer-events: auto; cursor: pointer; animation: fly 20s linear forwards; background: none; border: 0; padding: 0; font: inherit; color: inherit; }
+  .blimp { position: absolute; top: 4px; display: flex; align-items: center; pointer-events: auto; cursor: pointer; background: none; border: 0; padding: 0; font: inherit; color: inherit; }
+  .blimp.rtl { left: 100%; animation: fly-rtl 20s linear forwards; }
+  .blimp.ltr { right: 100%; flex-direction: row-reverse; animation: fly-ltr 20s linear forwards; }
+  .blimp.ltr svg { transform: scaleX(-1); }
   .blimp:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
   .blimp svg { width: 150px; height: 64px; flex: none; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.25)); }
   .blimp .rope { width: 26px; height: 2px; background: #6b7280; flex: none; }
   .blimp .banner { background: #fffbe8; color: #2a2418; border: 2px solid #c8202a; border-radius: 4px; padding: 6px 14px; font-family: "Playfair Display", Georgia, serif; font-weight: 900; font-size: 15px; letter-spacing: 0.03em; text-transform: uppercase; white-space: nowrap; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
-  @keyframes fly { to { transform: translateX(calc(-100vw - 100%)); } }
+  @keyframes fly-rtl { to { transform: translateX(calc(-100vw - 100%)); } }
+  @keyframes fly-ltr { to { transform: translateX(calc(100vw + 100%)); } }
+
+  /* Random cameos: bunnies running across the bottom of the screen */
+  #cameos { position: fixed; left: 0; right: 0; bottom: 0; height: 130px; z-index: 8; pointer-events: none; overflow: hidden; }
+  .cameo { position: absolute; bottom: 6px; pointer-events: auto; cursor: pointer; background: none; border: 0; padding: 0; }
+  .cameo:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+  .cameo.rtl { left: 100%; animation: fly-rtl 8s linear forwards; }
+  .cameo.ltr { right: 100%; animation: fly-ltr 8s linear forwards; }
+  .cameo-flip { display: block; }
+  .cameo.ltr .cameo-flip { transform: scaleX(-1); }
+  .cameo svg { display: block; height: 100px; width: auto; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.25)); animation: cameo-bob 0.35s ease-in-out infinite; }
+  @keyframes cameo-bob { 50% { transform: translateY(-5px); } }
   .credits { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.5; color: var(--muted); display: grid; gap: 2px; }
   .credits a { color: var(--ink); }
   details summary { cursor: pointer; font-weight: 700; }
-  @media (prefers-reduced-motion: reduce) { .blimp { animation: none; left: 50%; translate: -50% 0; } .decision { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .decision { animation: none; } }
 
   /* FX */
   canvas { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
@@ -342,11 +364,21 @@
   #ascent .ascent-btn:focus-visible { outline: 3px solid #5a3500; outline-offset: 3px; }
   .float {
     position: fixed; z-index: 6; pointer-events: none; translate: -50% -50%;
-    font-family: "Fredoka", "Arial Rounded MT Bold", system-ui, sans-serif; font-weight: 700; font-size: 26px; color: var(--ink);
-    text-shadow: 0 2px 0 var(--bg); animation: rise 0.9s ease-out forwards; white-space: nowrap;
+    font-family: "Fredoka", "Arial Rounded MT Bold", system-ui, sans-serif; white-space: nowrap;
   }
-  .float.mini { font-family: "Nunito", system-ui, sans-serif; font-weight: 700; font-size: 14px; color: var(--muted); animation-duration: 1.2s; }
+  .float:not(.mini) {
+    font-weight: 800; font-size: 38px; color: #ffd43b; -webkit-text-stroke: 1.5px #5a3500; paint-order: stroke fill;
+    text-shadow: 0 3px 0 #5a3500, 0 8px 16px rgba(0, 0, 0, 0.4);
+    animation: pop-rise 0.9s cubic-bezier(0.22, 1.6, 0.4, 1) forwards;
+  }
+  .float.mini { font-family: "Nunito", system-ui, sans-serif; font-weight: 700; font-size: 14px; color: var(--muted); animation: rise 1.2s ease-out forwards; }
   @keyframes rise { to { translate: -50% -180%; opacity: 0; } }
+  @keyframes pop-rise {
+    0% { translate: -50% -50%; scale: 0.4; opacity: 0; }
+    16% { scale: 1.3; opacity: 1; }
+    30% { scale: 1; }
+    100% { translate: -50% -210%; scale: 1; opacity: 0; }
+  }
   #toast {
     position: fixed; z-index: 7; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); translate: -50% 0;
     background: var(--ink); color: var(--bg); border-radius: 10px; padding: 10px 16px; font-size: 15px; font-weight: 600;
@@ -357,7 +389,6 @@
     #balloon, .prop, .halo, #ascent .cloud, #ascent .rays, #ascent.go .ascender, #ascent.leave .ascender { animation: none; }
     #ascent .ascender { transform: none; }
     #balloon.hit .squish, #balloon.deflating .squish, #balloon.inflating .squish { animation: none; }
-    .float { animation-duration: 0.01s; }
   }
 </style>
 </head>
@@ -400,6 +431,7 @@
 </div>
 <div id="toast" hidden></div>
 <div id="blimps"></div>
+<div id="cameos" aria-hidden="true"></div>
 <div class="decision" id="decision" hidden role="alertdialog" aria-labelledby="decQ">
   <div class="dec-head"><span class="tag union">Union request</span><span id="decLeft">45s</span></div>
   <p class="dec-q" id="decQ"></p>
@@ -420,7 +452,7 @@
         <div class="seg" data-opt="needles"><button type="button" data-val="detailed">Detailed</button><button type="button" data-val="basic">Basic</button></div></div>
       <div class="opt"><span>Photorealistic mode</span>
         <div class="seg" data-opt="real"><button type="button" data-val="off">Off</button><button type="button" data-val="on">On</button></div></div>
-      <p class="note">Photorealistic mode swaps in real photographs of balloons, monkeys, hats and needles (credits at the bottom), and switches every sound effect to a recorded-style version with room echo.</p>
+      <p class="note">Photorealistic mode swaps in real photographs of balloons, monkeys, hats and needles (credits at the bottom), and switches every sound effect to a recorded-style version with room echo. Unlocking it is also required before the Halo hat can be bought.</p>
     </section>
     <section>
       <h3>Background</h3>
@@ -437,8 +469,12 @@
       <h3>Sound</h3>
       <div class="opt"><span>Music</span>
         <div class="seg" data-opt="music"><button type="button" data-val="on">On</button><button type="button" data-val="off">Off</button></div></div>
+      <div class="opt"><span>Music volume</span>
+        <input class="vol" type="range" id="musicVol" min="0" max="100" value="100" aria-label="Music volume"></div>
       <div class="opt"><span>Effects</span>
         <div class="seg" data-opt="sound"><button type="button" data-val="on">On</button><button type="button" data-val="off">Off</button></div></div>
+      <div class="opt"><span>Effects volume</span>
+        <input class="vol" type="range" id="soundVol" min="0" max="100" value="100" aria-label="Effects volume"></div>
       <div class="opt"><span>Now playing</span>
         <div class="np"><b id="trackName">Calypso Pop</b><button class="tool" id="nextTrack" type="button">Next track</button></div></div>
     </section>
@@ -560,16 +596,15 @@
     <nav class="tabs" role="tablist">
       <button class="tab" role="tab" data-tab="needles" type="button">Needles</button>
       <button class="tab" role="tab" data-tab="minions" type="button">Monkeys</button>
+      <button class="tab" role="tab" data-tab="mhats" type="button">Monkey Hats</button>
       <button class="tab" role="tab" data-tab="upgrades" type="button">Upgrades</button>
       <button class="tab" role="tab" data-tab="colours" type="button">Colours</button>
       <button class="tab" role="tab" data-tab="hats" type="button">Hats</button>
-      <button class="tab" role="tab" data-tab="mhats" type="button">Monkey Hats</button>
     </nav>
     <div class="row" id="row"></div>
   </section>
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
   // ---------- Data ----------
@@ -735,13 +770,15 @@
         <path d="M58 48 C56 -10 144 -10 142 48 Z" fill="url(#hg-steel)" ${OL}/>
         <path d="M56 35 Q100 48 144 35 L145 48 Q100 61 55 48 Z" fill="#6b7488" ${OL}/><path d="M100 -1 L100 38" stroke="#6b7488" stroke-width="7"/>
         ${[64, 78, 92, 108, 122, 136].map(x => `<circle cx="${x}" cy="${44 + Math.abs(100 - x) * -0.12 + 3}" r="2.2" fill="#dfe3ea"/>`).join('')}` },
-    { id: 'halo', name: 'Halo', cost: 3e8, desc: 'Too pure to pop. Pops anyway.',
+    { id: 'halo', name: 'Halo', cost: 7.77e10, desc: 'Too pure to pop. Pops anyway.',
       svg: `<g class="halo"><ellipse cx="100" cy="-12" rx="46" ry="12" fill="none" stroke="#ffe27a" stroke-width="18" opacity="0.22"/>
         <ellipse cx="100" cy="-12" rx="46" ry="12" fill="none" stroke="url(#hg-gold)" stroke-width="7"/>
         <ellipse cx="100" cy="-12" rx="46" ry="12" fill="none" stroke="#fffbe0" stroke-width="2" opacity="0.8"/></g>` },
   ];
 
   // Monkey hats, drawn in the monkey's own 64-unit head space (head top at y=11).
+  // Ordered (and costed) to match the unlock order of the same hats in HATS above, with the three
+  // monkey-only extras (banana, chef, headphones) slotted in at a similar relative price point.
   const MHATS = [
     { id: 'party', name: 'Party Hat', cost: 500, desc: 'Every monkey loves a party',
       svg: `<g transform="rotate(-12 32 15)"><polygon points="32,-14 21,16 43,16" fill="#2f7fe8" stroke="#1c1f2b" stroke-width="1.2" stroke-linejoin="round"/>
@@ -749,54 +786,54 @@
     { id: 'banana', name: 'Banana', cost: 3000, desc: 'Snack storage, on the head',
       svg: `<path d="M13 15 Q32 -8 53 9 Q49 13 46 11 Q32 0 17 17 Z" fill="#f5d02a" stroke="#8a6a00" stroke-width="1.2"/>
         <path d="M53 9 L56 6" stroke="#5a3a10" stroke-width="2.5" stroke-linecap="round"/>` },
-    { id: 'fez', name: 'Fez', cost: 2e4, desc: 'Tassel included',
-      svg: `<path d="M22 17 L24 -3 L40 -3 L42 17 Q32 20 22 17 Z" fill="#c8202a" stroke="#1c1f2b" stroke-width="1.2"/>
-        <ellipse cx="32" cy="-3" rx="8" ry="2" fill="#a3141f"/><path d="M32 -3 Q40 -2 41 8" fill="none" stroke="#ffd43b" stroke-width="1.5"/>
-        <circle cx="41" cy="9" r="2" fill="#ffd43b"/>` },
-    { id: 'beanie', name: 'Beanie', cost: 5e4, desc: 'Cosy ears, better focus',
+    { id: 'beanie', name: 'Beanie', cost: 2e4, desc: 'Cosy ears, better focus',
       svg: `<path d="M12 19 C11 -5 53 -5 52 19 Z" fill="#2fb85a" stroke="#17753a" stroke-width="1"/>
         <path d="M11 14 Q32 20 53 14 L53 21 Q32 27 11 21 Z" fill="#1f8f45"/><circle cx="32" cy="-3" r="5.5" fill="#eef7f0"/>` },
-    { id: 'chef', name: "Chef's Hat", cost: 1.5e5, desc: 'Cooks up pops',
-      svg: `<g fill="#fff"><circle cx="24" cy="2" r="8"/><circle cx="40" cy="2" r="8"/><circle cx="32" cy="-4" r="9"/><rect x="21" y="3" width="22" height="14" rx="2"/></g>
-        <path d="M21 10 H43" stroke="#d6d9e3" stroke-width="1.2"/>
-        <path d="M17 1 A8 8 0 0 1 24 -6 A9 9 0 0 1 40 -6 A8 8 0 0 1 47 1" fill="none" stroke="#c9ced8" stroke-width="1"/>` },
-    { id: 'cowboy', name: 'Cowboy Hat', cost: 4e5, desc: 'Yee-pop',
+    { id: 'beret', name: 'Beret', cost: 5e4, desc: 'Ooh la la',
+      svg: `<path d="M11 17 C7 4 40 -2 56 8 C60 12 56 18 50 19 Q32 22 13 19 Z" fill="#7a1a3a" stroke="#4a0d22" stroke-width="1"/>
+        <path d="M34 2 q1 -4 3 -5" stroke="#4a0d22" stroke-width="2" stroke-linecap="round"/>` },
+    { id: 'cowboy', name: 'Cowboy Hat', cost: 1.5e5, desc: 'Yee-pop',
       svg: `<path d="M23 14 C21 0 27 -4 32 -1 C37 -4 43 0 41 14 Z" fill="#a86d36" stroke="#6a401c" stroke-width="1"/>
         <rect x="23" y="9" width="18" height="3.5" fill="#4a2e14"/>
         <path d="M6 12 Q10 20 32 20 Q54 20 58 12 Q50 15 32 14 Q14 15 6 12 Z" fill="#8a5a2b" stroke="#6a401c" stroke-width="1"/>` },
-    { id: 'pirate', name: 'Pirate Hat', cost: 1e6, desc: 'Arr, pop the balloon',
-      svg: `<path d="M8 17 Q12 -4 32 -6 Q52 -4 56 17 Q32 9 8 17 Z" fill="#1c1f2b" stroke="#000" stroke-width="1"/>
-        <path d="M8 17 Q32 9 56 17" fill="none" stroke="#f5c518" stroke-width="1.8"/>
-        <circle cx="32" cy="3" r="3.2" fill="#fff"/><path d="M28 8 L36 11 M36 8 L28 11" stroke="#fff" stroke-width="1.5"/>` },
-    { id: 'headphones', name: 'Headphones', cost: 2.5e6, desc: 'Plays Calypso Pop on loop',
+    { id: 'chef', name: "Chef's Hat", cost: 4e5, desc: 'Cooks up pops',
+      svg: `<g fill="#fff"><circle cx="24" cy="2" r="8"/><circle cx="40" cy="2" r="8"/><circle cx="32" cy="-4" r="9"/><rect x="21" y="3" width="22" height="14" rx="2"/></g>
+        <path d="M21 10 H43" stroke="#d6d9e3" stroke-width="1.2"/>
+        <path d="M17 1 A8 8 0 0 1 24 -6 A9 9 0 0 1 40 -6 A8 8 0 0 1 47 1" fill="none" stroke="#c9ced8" stroke-width="1"/>` },
+    { id: 'tophat', name: 'Top Hat', cost: 1e6, desc: 'Management material',
+      svg: `<rect x="21" y="-13" width="22" height="28" rx="1.5" fill="#1c1f2b"/><rect x="21" y="7" width="22" height="4" fill="#e8323c"/>
+        <ellipse cx="32" cy="15" rx="16" ry="3.2" fill="#1c1f2b"/><rect x="24" y="-10" width="2.5" height="16" fill="#fff" opacity="0.15"/>` },
+    { id: 'fez', name: 'Fez', cost: 2.5e6, desc: 'Tassel included',
+      svg: `<path d="M22 17 L24 -3 L40 -3 L42 17 Q32 20 22 17 Z" fill="#c8202a" stroke="#1c1f2b" stroke-width="1.2"/>
+        <ellipse cx="32" cy="-3" rx="8" ry="2" fill="#a3141f"/><path d="M32 -3 Q40 -2 41 8" fill="none" stroke="#ffd43b" stroke-width="1.5"/>
+        <circle cx="41" cy="9" r="2" fill="#ffd43b"/>` },
+    { id: 'headphones', name: 'Headphones', cost: 8e6, desc: 'Plays Calypso Pop on loop',
       svg: `<path d="M9 31 C7 3 57 3 55 31" fill="none" stroke="#3a3f52" stroke-width="3.5"/>
         <rect x="3" y="24" width="10" height="15" rx="4" fill="#2fb3c9" stroke="#1c1f2b" stroke-width="1"/>
         <rect x="51" y="24" width="10" height="15" rx="4" fill="#2fb3c9" stroke="#1c1f2b" stroke-width="1"/>` },
-    { id: 'viking', name: 'Viking Helmet', cost: 8e6, desc: 'Horns are extra pointy',
+    { id: 'sombrero', name: 'Sombrero', cost: 2e7, desc: 'Siesta after this shift',
+      svg: `<path d="M24 14 C23 -3 41 -3 40 14 Z" fill="#e3c27a" stroke="#a88542" stroke-width="1"/>
+        <path d="M24.5 8 Q32 10 39.5 8" stroke="#c8202a" stroke-width="2" fill="none"/>
+        <ellipse cx="32" cy="14" rx="30" ry="5.5" fill="#e3c27a" stroke="#c8202a" stroke-width="1.4"/>` },
+    { id: 'wizard', name: 'Wizard Hat', cost: 6e7, desc: 'Monkey magic',
+      svg: `<polygon points="34,-19 20,15 46,15" fill="#3b2a8f" stroke="#1c1f2b" stroke-width="1.2" stroke-linejoin="round"/>${star(33, 0, 4, '#ffd43b')}
+        <ellipse cx="33" cy="15" rx="18" ry="3.5" fill="#2a1d6b"/>` },
+    { id: 'pirate', name: 'Pirate Hat', cost: 1.5e8, desc: 'Arr, pop the balloon',
+      svg: `<path d="M8 17 Q12 -4 32 -6 Q52 -4 56 17 Q32 9 8 17 Z" fill="#1c1f2b" stroke="#000" stroke-width="1"/>
+        <path d="M8 17 Q32 9 56 17" fill="none" stroke="#f5c518" stroke-width="1.8"/>
+        <circle cx="32" cy="3" r="3.2" fill="#fff"/><path d="M28 8 L36 11 M36 8 L28 11" stroke="#fff" stroke-width="1.5"/>` },
+    { id: 'hardhat', name: 'Hard Hat', cost: 3e8, desc: 'Required by the union',
+      svg: `<path d="M13 18 C12 -5 52 -5 51 18 Z" fill="#f5c518" stroke="#a88100" stroke-width="1"/>
+        <path d="M8 16 Q32 22 58 15 L58 19 Q32 26 8 20 Z" fill="#f5c518" stroke="#a88100" stroke-width="1"/>
+        <rect x="30" y="-1" width="4" height="17" fill="#d9a800"/>` },
+    { id: 'crown', name: 'Tiny Crown', cost: 5e8, desc: 'King of the monkeys',
+      svg: `<path d="M20 17 L19 1 L26 8 L32 -3 L38 8 L45 1 L44 17 Z" fill="#f5c518" stroke="#a88100" stroke-width="1.2" stroke-linejoin="round"/>
+        <circle cx="32" cy="12" r="2.2" fill="#e8323c"/>` },
+    { id: 'viking', name: 'Viking Helmet', cost: 1e9, desc: 'Horns are extra pointy',
       svg: `<path d="M15 13 Q4 9 5 -6 Q11 5 19 6 Z" fill="#f2eee4" stroke="#8a8270" stroke-width="1"/>
         <path d="M49 13 Q60 9 59 -6 Q53 5 45 6 Z" fill="#f2eee4" stroke="#8a8270" stroke-width="1"/>
         <path d="M13 19 C13 -3 51 -3 51 19 Z" fill="#9aa3b5" stroke="#4a4f60" stroke-width="1.2"/>
         <rect x="12" y="14" width="40" height="6" rx="2" fill="#6b7488"/><path d="M32 -1 L32 14" stroke="#6b7488" stroke-width="3"/>` },
-    { id: 'hardhat', name: 'Hard Hat', cost: 2e7, desc: 'Required by the union',
-      svg: `<path d="M13 18 C12 -5 52 -5 51 18 Z" fill="#f5c518" stroke="#a88100" stroke-width="1"/>
-        <path d="M8 16 Q32 22 58 15 L58 19 Q32 26 8 20 Z" fill="#f5c518" stroke="#a88100" stroke-width="1"/>
-        <rect x="30" y="-1" width="4" height="17" fill="#d9a800"/>` },
-    { id: 'wizard', name: 'Wizard Hat', cost: 6e7, desc: 'Monkey magic',
-      svg: `<polygon points="34,-19 20,15 46,15" fill="#3b2a8f" stroke="#1c1f2b" stroke-width="1.2" stroke-linejoin="round"/>${star(33, 0, 4, '#ffd43b')}
-        <ellipse cx="33" cy="15" rx="18" ry="3.5" fill="#2a1d6b"/>` },
-    { id: 'sombrero', name: 'Sombrero', cost: 1.5e8, desc: 'Siesta after this shift',
-      svg: `<path d="M24 14 C23 -3 41 -3 40 14 Z" fill="#e3c27a" stroke="#a88542" stroke-width="1"/>
-        <path d="M24.5 8 Q32 10 39.5 8" stroke="#c8202a" stroke-width="2" fill="none"/>
-        <ellipse cx="32" cy="14" rx="30" ry="5.5" fill="#e3c27a" stroke="#c8202a" stroke-width="1.4"/>` },
-    { id: 'beret', name: 'Beret', cost: 3e8, desc: 'Ooh la la',
-      svg: `<path d="M11 17 C7 4 40 -2 56 8 C60 12 56 18 50 19 Q32 22 13 19 Z" fill="#7a1a3a" stroke="#4a0d22" stroke-width="1"/>
-        <path d="M34 2 q1 -4 3 -5" stroke="#4a0d22" stroke-width="2" stroke-linecap="round"/>` },
-    { id: 'crown', name: 'Tiny Crown', cost: 5e8, desc: 'King of the monkeys',
-      svg: `<path d="M20 17 L19 1 L26 8 L32 -3 L38 8 L45 1 L44 17 Z" fill="#f5c518" stroke="#a88100" stroke-width="1.2" stroke-linejoin="round"/>
-        <circle cx="32" cy="12" r="2.2" fill="#e8323c"/>` },
-    { id: 'tophat', name: 'Top Hat', cost: 1e9, desc: 'Management material',
-      svg: `<rect x="21" y="-13" width="22" height="28" rx="1.5" fill="#1c1f2b"/><rect x="21" y="7" width="22" height="4" fill="#e8323c"/>
-        <ellipse cx="32" cy="15" rx="16" ry="3.2" fill="#1c1f2b"/><rect x="24" y="-10" width="2.5" height="16" fill="#fff" opacity="0.15"/>` },
   ];
 
   // Monkey upgrades: each tier doubles that monkey type's output.
@@ -819,13 +856,24 @@
   // ---------- State ----------
   const KEY = 'pop-clicker-save-v1';
   const fresh = () => ({ pops: 0, total: 0, clicks: 0, needle: 0, colour: 0, minions: {}, hats: {}, hat: null, look: 0, up: {}, mhats: {}, mhat: null, sound: true, music: true,
-    opt: { style: 'body', needles: 'detailed', real: false, bg: 'plain' }, feed: [], news: [], union: 0, marks: {}, unread: 0, rel: 50, boosts: [],
+    musicVol: 1, soundVol: 1,
+    opt: { style: 'body', needles: 'detailed', real: false, bg: 'plain' }, feed: [], news: [], union: 0, marks: {}, unread: 0, rel: 50, boosts: [], realUnlocked: false,
     born: Date.now(), t: Date.now() });
+  // The halo (the final, most expensive hat) requires photorealistic mode to have been unlocked first.
+  const REAL_UNLOCK_COST = 1e6;
   let S;
   let tab = 'needles';
 
   const mult = () => COLOURS[S.colour].mult;
-  const perClick = () => NEEDLES[S.needle].click * mult();
+  // Boosts flagged `click` (e.g. a cameo sighting bonus) apply to the player's own clicks too, not
+  // just the monkeys' passive output.
+  function clickBoostMult() {
+    const now = Date.now();
+    let m = 1;
+    for (const b of S.boosts) if (b.until > now && b.click) m *= b.mult;
+    return m;
+  }
+  const perClick = () => NEEDLES[S.needle].click * mult() * clickBoostMult();
   const tierOf = m => S.up[m.id] || 0;
   const unitPps = m => m.pps * Math.pow(2, tierOf(m));
   // Union standing (0-100) sets a baseline worker speed of ×0.85 to ×1.15; choices add temporary boosts on top.
@@ -864,6 +912,9 @@
     s.feed = s.feed || []; s.news = s.news || []; s.marks = s.marks || {};
     s.union = s.union || 0; s.unread = s.unread || 0; s.born = s.born || Date.now();
     if (s.rel == null) s.rel = 50; s.boosts = s.boosts || [];
+    if (s.musicVol == null) s.musicVol = 1; if (s.soundVol == null) s.soundVol = 1;
+    // Grandfather in anyone who already owns the halo or had photorealistic mode on before this was a paid unlock.
+    if (s.realUnlocked == null) s.realUnlocked = !!(s.hats && s.hats.halo) || !!s.opt.real;
     if (!s.news.length) s.news.push({ t: s.born, h: 'Pop Clicker opens for business', rot: -0.8,
       b: 'A single red balloon and one sewing pin were unveiled this morning. "We expect big things," said the balloon, shortly before being popped.',
       c: 'The balloon, pictured before its first day.', img: { type: 'balloon', ci: 0 } });
@@ -948,9 +999,10 @@
     dart: ['m_dart', 0.2, 0.03, 0.32, 0.13, 0.9, -1], ninja: ['m_ninja', 0.6, 0.01, 0.62, 0.92, 0.85, 1],
     orangutan: ['m_orangutan', 0.3, 0.01, 0.5, 0.82, 0.8, 1], space: ['m_space', 0.5, 0.02, 0.5, 0.97, 0.9, 1],
   };
-  // Balloon hat photos: [width, bottom edge] in balloon units, so each one sits down onto the crown.
-  const BHP = { party: [64, 50], beanie: [110, 62], propeller: [114, 60], beret: [124, 44], cowboy: [152, 56], bowler: [120, 54],
-    tophat: [104, 52], fez: [92, 50], sombrero: [158, 60], wizard: [140, 52], pirate: [150, 46], hardhat: [120, 56], crown: [96, 52], viking: [112, 76] };
+  // Balloon hat photos: [width, bottom edge, horizontal offset, rotation deg] in balloon units, so
+  // each one sits down onto the crown. Offset/rotation correct for off-centre or angled source photos.
+  const BHP = { party: [64, 50], beanie: [110, 62], propeller: [114, 74, -22, -8], beret: [124, 44], cowboy: [115, 105, 0, -6], bowler: [120, 70, 4, 0],
+    tophat: [104, 58, 6, -10], fez: [92, 50], sombrero: [158, 86], wizard: [120, 70, -14, -16], pirate: [140, 75, -16, 0], hardhat: [120, 60, 8, 6], crown: [96, 52], viking: [112, 50] };
   // Monkey hat photos: [width relative to head width, fraction of the hat that sinks onto the head].
   const MHP = { party: [0.7, 0.1], banana: [0.8, 0.25], fez: [0.9, 0.14], pirate: [1.5, 0.22], viking: [1.1, 0.45], wizard: [1.4, 0.16],
     crown: [0.95, 0.16], tophat: [1.0, 0.12], cowboy: [1.5, 0.22], beanie: [1.1, 0.42], hardhat: [1.15, 0.36], headphones: [1.25, 0.75],
@@ -972,8 +1024,8 @@
     mode = mode || (S ? S.opt.style : 'body');
     real = real ?? !!(S && S.opt.real);
     const d = '#1c1f2b', hat = MHATS.find(h => h.id === hatId), body = mode === 'body';
-    const fur = real ? 'url(#fg)' : L.fur, skin = real ? 'url(#sg)' : L.face;
-    const suit = L.suit ? (real ? 'url(#ug)' : L.suit) : fur;
+    const fur = real ? 'url(#fg)' : 'url(#tfg)', skin = real ? 'url(#sg)' : 'url(#tsg)';
+    const suit = L.suit ? (real ? 'url(#ug)' : 'url(#tug)') : fur;
     const furF = real ? ' filter="url(#fur)"' : '';
     const [vx, vy, W, H] = RIG[mode].vb;
     let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="${vx} ${vy} ${W} ${H}">`;
@@ -990,6 +1042,14 @@
         <feMerge><feMergeNode in="d"/><feMergeNode in="gi"/></feMerge>
       </filter>
       <filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-opacity="0.35"/></filter>
+    </defs><g filter="url(#sh)">`;
+    // Toon mode stays flat-shaded vector art, but a soft highlight-to-shadow gradient on each patch of
+    // fur/skin/suit (instead of one flat fill) reads as a rounded, lit form rather than a paper cutout.
+    else s += `<defs>
+      <radialGradient id="tfg" cx="0.38" cy="0.26" r="0.85"><stop offset="0" stop-color="${shade(L.fur, 0.3)}"/><stop offset="0.55" stop-color="${L.fur}"/><stop offset="1" stop-color="${shade(L.fur, -0.32)}"/></radialGradient>
+      <radialGradient id="tsg" cx="0.38" cy="0.26" r="0.85"><stop offset="0" stop-color="${shade(L.face, 0.26)}"/><stop offset="0.6" stop-color="${L.face}"/><stop offset="1" stop-color="${shade(L.face, -0.22)}"/></radialGradient>
+      <radialGradient id="tug" cx="0.38" cy="0.26" r="0.85"><stop offset="0" stop-color="${shade(L.suit || L.fur, 0.26)}"/><stop offset="1" stop-color="${shade(L.suit || L.fur, -0.28)}"/></radialGradient>
+      <filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="1.2" stdDeviation="1" flood-opacity="0.25"/></filter>
     </defs><g filter="url(#sh)">`;
     if (body) {
       // Sitting on its haunches: knees up, one long arm resting on the ground, the other raised to hold the needle.
@@ -1035,7 +1095,7 @@
       `<path d="M13 22 Q19 10 31 7" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="0.75"/>`;
     if (hat && L.acc === 'helmet') s += `<g transform="translate(0 -9)">${hat.svg}</g>`;
     if (body) s += `</g>`;
-    if (real) s += `</g>`;
+    s += `</g>`;
     return s + `</svg>`;
   }
   // Monkeys and the held needle are rasterised once to canvases, so drawing dozens per frame stays cheap.
@@ -1055,7 +1115,6 @@
   const MONKEY_URI = {}, MONKEY_IMG = {};
   let imgGen = 0, NEEDLE_HOLD = null;
   function buildMonkeyImages() {
-    reset3D();
     if (S.opt.real) {
       MINIONS.forEach(m => { MONKEY_URI[m.id] = `photos/${PM[m.id][0]}.webp`; photo(PM[m.id][0]); });
       return;
@@ -1070,9 +1129,27 @@
   const MODEL_LOOK = { fur: '#a86d36', face: '#f5d9b5' };
   const mysteryURI = () => svgURI(monkeySVG({ fur: '#8f93a6', face: '#b9bccb' }));
 
+  // A photo needle lies flat (head on the left, tip on the right); rotated 135deg about the tip it
+  // points up-and-right from the hotspot, same reading as the drawn cursor's tip-at-origin needle.
+  // Rasterised to a canvas (rather than nesting the photo in an SVG transform) so it doesn't depend
+  // on how a browser resolves an <image> inside a data: URI.
+  function photoCursorURI(img, size) {
+    const c = document.createElement('canvas'), w = img.naturalWidth, h = img.naturalHeight, scale = (size * 1.3) / w;
+    c.width = size; c.height = size;
+    const gx = c.getContext('2d');
+    gx.translate(3, size - 3); gx.rotate(135 * Math.PI / 180); gx.scale(scale, scale);
+    gx.drawImage(img, -w, -h / 2);
+    return c.toDataURL();
+  }
   function applyNeedle() {
     const n = NEEDLES[S.needle], size = needleMode() === 'basic' ? 32 : 48;
-    stage.style.cursor = `url("${svgURI(cursorSVG(n))}") 3 ${size - 3}, crosshair`;
+    if (S.opt.real) {
+      const img = photo('n' + S.needle), want = S.needle;
+      const setCursor = () => { if (S.needle === want) stage.style.cursor = `url("${photoCursorURI(img, size)}") 3 ${size - 3}, crosshair`; };
+      if (photoReady(img)) setCursor(); else img.onload = setCursor;
+    } else {
+      stage.style.cursor = `url("${svgURI(cursorSVG(n))}") 3 ${size - 3}, crosshair`;
+    }
     const want = S.needle + needleMode();
     raster(holdSVG(n), 544, 112).then(c => { if (c && S.needle + needleMode() === want) NEEDLE_HOLD = c; });
   }
@@ -1086,8 +1163,9 @@
   function applyHat() {
     const h = HATS.find(h => h.id === S.hat), ph = h && S.opt.real && BHP[h.id];
     if (ph) {
-      const [w, bottom] = ph, [W, H] = PHOTO_SIZE['h_' + h.id], hh = w * H / W;
-      $('hat').innerHTML = `${SH}<image href="photos/h_${h.id}.webp" x="${100 - w / 2}" y="${bottom - hh}" width="${w}" height="${hh}" filter="url(#hatShadow)"/>`;
+      const [w, bottom, offsetX = 0, rot = 0] = ph, [W, H] = PHOTO_SIZE['h_' + h.id], hh = w * H / W;
+      const x = 100 - w / 2 + offsetX, y = bottom - hh, rotAttr = rot ? ` transform="rotate(${rot} ${x + w / 2} ${bottom})"` : '';
+      $('hat').innerHTML = `${SH}<image href="photos/h_${h.id}.webp" x="${x}" y="${y}" width="${w}" height="${hh}" filter="url(#hatShadow)"${rotAttr}/>`;
     } else $('hat').innerHTML = h ? h.svg : '';
   }
   function renderCrew() {
@@ -1161,12 +1239,15 @@
     } else {
       html = card({ kind: 'hat', id: '', name: 'No hat', art: '<svg viewBox="25 -75 150 130"></svg>',
         desc: 'Let the balloon go bare', cost: S.hat ? 'Take off' : 'Bare', owned: true }) +
-        HATS.map(h => card({
-          kind: 'hat', id: h.id, name: h.name, desc: h.desc,
-          art: S.opt.real && BHP[h.id] ? `<img src="photos/h_${h.id}.webp" alt="">` : `<svg viewBox="25 -75 150 130">${h.svg}</svg>`,
-          cost: S.hats[h.id] ? (S.hat === h.id ? 'Wearing' : 'Wear') : h.cost,
-          owned: !!S.hats[h.id],
-        })).join('');
+        HATS.map(h => {
+          const needsReal = h.id === 'halo' && !S.hats[h.id] && !S.realUnlocked;
+          return card({
+            kind: 'hat', id: h.id, name: h.name, desc: needsReal ? 'Unlock Photorealistic mode first (Settings > Look)' : h.desc,
+            art: S.opt.real && BHP[h.id] ? `<img src="photos/h_${h.id}.webp" alt="">` : `<svg viewBox="25 -75 150 130">${h.svg}</svg>`,
+            cost: S.hats[h.id] ? (S.hat === h.id ? 'Wearing' : 'Wear') : h.cost,
+            owned: !!S.hats[h.id], locked: needsReal, right: needsReal ? 'Locked' : '',
+          });
+        }).join('');
     }
     row.innerHTML = html;
     refresh();
@@ -1237,6 +1318,7 @@
       if (!id) { if (S.hat) hatSwipe(); S.hat = null; applyHat(); renderRow(); save(); return; }
       const h = HATS.find(h => h.id === id);
       if (S.hats[id]) { S.hat = S.hat === id ? null : id; hatSwipe(); applyHat(); renderRow(); save(); return; }
+      if (id === 'halo' && !S.realUnlocked) return;
       if (S.pops >= h.cost) {
         S.pops -= h.cost; S.hats[id] = true; S.hat = id; applyHat(); hatSwipe(); ok = true;
         news(id === 'halo' ? 'ascend' : 'hat', id);
@@ -1292,7 +1374,17 @@
       noiseBuf = actx.createBuffer(1, Math.floor(actx.sampleRate * 0.25), actx.sampleRate);
       const d = noiseBuf.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      applyVolume();
     } catch (e) { actx = null; }
+  }
+  // Most one-shot sound effects (pops, needles, monkey voices) connect straight to `master`; the
+  // ascension cutscene and photorealistic pops have their own bus. All three are "effects" volume.
+  function applyVolume() {
+    if (!actx) return;
+    master.gain.value = 2.2 * S.soundVol;
+    sceneBus.gain.value = 0.9 * S.soundVol;
+    realBus.gain.value = 1.6 * S.soundVol;
+    if (musicOn) musicBus.gain.setTargetAtTime(0.6 * S.musicVol, actx.currentTime, 0.05);
   }
   function ready() {
     if (!S.sound) return false;
@@ -1488,7 +1580,7 @@
     const now = actx.currentTime;
     nextT = now + 0.1;
     musicBus.gain.cancelScheduledValues(now);
-    musicBus.gain.setTargetAtTime(0.6, now, 0.3);
+    musicBus.gain.setTargetAtTime(0.6 * S.musicVol, now, 0.3);
     tickMusic();
     musicTimer = setInterval(tickMusic, 50);
   }
@@ -1504,7 +1596,7 @@
     const now = actx.currentTime;
     musicBus.gain.cancelScheduledValues(now);
     musicBus.gain.setTargetAtTime(0, now, 0.03);
-    musicBus.gain.setTargetAtTime(0.6, now + 0.65, 0.1);
+    musicBus.gain.setTargetAtTime(0.6 * S.musicVol, now + 0.65, 0.1);
     nextT = now + 0.7;
   }
   document.addEventListener('pointerdown', () => { if (S && S.music) startMusic(); }, true);
@@ -1766,7 +1858,23 @@
       x.setTransform(r, 0, 0, r, 0, 0);
       x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
     });
-    sizeBalloon(); resize3D();
+    sizeBalloon();
+    scaleMenus();
+  }
+  // Menus are sized for a phone screen; on a bigger display, zoom them up so text and tap
+  // targets stay a sensible physical size instead of shrinking to a corner of a big monitor.
+  function scaleMenus() {
+    const m = Math.min(innerWidth, innerHeight), ui = Math.min(1.65, Math.max(1, m / 620));
+    const sheet = $('settings').querySelector('.sheet');
+    sheet.style.zoom = ui;
+    // CSS max-height:86vh lives inside the zoomed subtree, so vh there resolves against a
+    // shrunken effective viewport and the cap ends up scaled by `ui` again. Override it in real
+    // px (pre-divided by ui) so the panel actually tops out at 86% of the real screen height.
+    sheet.style.maxHeight = (innerHeight * 0.86 / ui) + 'px';
+    document.querySelector('.shop').style.zoom = Math.min(1.3, Math.max(1, m / 820));
+    document.querySelector('.topbar').style.zoom = ui;
+    $('sideTab').style.zoom = ui;
+    $('side').style.zoom = ui;
   }
   // The balloon fills most of the stage, so the monkeys around it can be drawn large.
   function sizeBalloon() {
@@ -1776,7 +1884,6 @@
   }
   addEventListener('resize', resize);
   function burst(x, y, count = 12) {
-    if (reduceMotion) return;
     const col = COLOURS[S.look];
     const rainbow = ['#ff4d5a', '#ff9f2e', '#ffe03a', '#3ccf6e', '#3a8cff', '#9b4dff'];
     for (let i = 0; i < count; i++) {
@@ -1816,7 +1923,7 @@
       ctx.restore();
     }
     const px = x + sx * (rig.paw[0] - ax) * k, py = y + (rig.paw[1] - ay) * k;
-    const aim = Math.atan2(ty - py, tx - px), kn = k * 0.8, grip = 44;
+    const aim = Math.atan2(ty - py, tx - px), kn = k * 0.55, grip = 44;
     if (NEEDLE_HOLD) {
       ctx.save(); ctx.translate(px, py); ctx.rotate(aim + Math.PI);
       if (gold) { ctx.shadowColor = '#ffd84a'; ctx.shadowBlur = 8; }
@@ -1840,235 +1947,6 @@
       cx.fillStyle = d.gold ? '#f5c518' : '#e8323c'; cx.beginPath(); cx.moveTo(-14, -5); cx.lineTo(-8, 0); cx.lineTo(-14, 5); cx.fill();
     }
     cx.restore();
-  }
-  // ---------- 3D sitting monkeys (three.js), used for full-body cartoon mode ----------
-  const T = window.THREE;
-  let R3 = null;
-  function init3D() {
-    if (R3 || !T) return;
-    try {
-      const cv = document.createElement('canvas'); cv.id = 'm3d'; document.body.appendChild(cv);
-      const renderer = new T.WebGLRenderer({ canvas: cv, alpha: true, antialias: true });
-      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
-      renderer.outputEncoding = T.sRGBEncoding;
-      const scene = new T.Scene(), camera = new T.OrthographicCamera(0, 1, 0, -1, 1, 6000);
-      camera.position.z = 3000;
-      scene.add(new T.HemisphereLight(0xffffff, 0x40385a, 0.75));
-      const key = new T.DirectionalLight(0xffffff, 0.95); key.position.set(-0.6, 0.9, 1); scene.add(key);
-      const rim = new T.DirectionalLight(0xffe6c8, 0.45); rim.position.set(0.9, 0.2, -0.8); scene.add(rim);
-      // An invisible copy of the balloon writes depth only, so monkeys behind it are hidden pixel-perfectly.
-      const occ = new T.Mesh(new T.SphereGeometry(1, 48, 32), new T.MeshBasicMaterial({ colorWrite: false }));
-      occ.renderOrder = -1; scene.add(occ);
-      const mats = {
-        fur: new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.78, metalness: 0, side: T.DoubleSide }),
-        metal: new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.3, metalness: 0.55 }),
-        glass: new T.MeshStandardMaterial({ color: 0xcfeaff, transparent: true, opacity: 0.28, roughness: 0.05, metalness: 0.2, depthWrite: false }),
-      };
-      R3 = { renderer, scene, camera, cv, occ, mats, pool: new Map(), tpl: new Map(), frame: 0 };
-      resize3D();
-    } catch (e) { R3 = null; }
-  }
-  function resize3D() {
-    if (!R3) return;
-    R3.renderer.setSize(innerWidth, innerHeight);
-    Object.assign(R3.camera, { left: 0, right: innerWidth, top: 0, bottom: -innerHeight });
-    R3.camera.updateProjectionMatrix();
-  }
-  function reset3D() {
-    if (!R3) return;
-    R3.pool.forEach(o => R3.scene.remove(o)); R3.pool.clear();
-    R3.tpl.forEach(t => t.geos.forEach(g => g.dispose())); R3.tpl.clear();
-  }
-  const linCol = hex => { const c = new T.Color(hex); c.convertSRGBToLinear(); return c; };
-  function prep(geo, color, pos, rot, scl) {
-    const g = geo.index ? geo.toNonIndexed() : geo;
-    if (g !== geo) geo.dispose();
-    if (g.attributes.uv) g.deleteAttribute('uv');
-    g.applyMatrix4(new T.Matrix4().compose(new T.Vector3(...pos), new T.Quaternion().setFromEuler(new T.Euler(...(rot || [0, 0, 0]))),
-      new T.Vector3(...(scl || [1, 1, 1]))));
-    const c = linCol(color), n = g.attributes.position.count, a = new Float32Array(n * 3);
-    for (let i = 0; i < n; i++) { a[i * 3] = c.r; a[i * 3 + 1] = c.g; a[i * 3 + 2] = c.b; }
-    g.setAttribute('color', new T.BufferAttribute(a, 3));
-    return g;
-  }
-  function mergeGeos(list) {
-    const n = list.reduce((t, g) => t + g.attributes.position.count, 0), out = new T.BufferGeometry();
-    const P = new Float32Array(n * 3), N = new Float32Array(n * 3), C = new Float32Array(n * 3);
-    let o = 0;
-    list.forEach(g => {
-      P.set(g.attributes.position.array, o * 3); N.set(g.attributes.normal.array, o * 3); C.set(g.attributes.color.array, o * 3);
-      o += g.attributes.position.count; g.dispose();
-    });
-    out.setAttribute('position', new T.BufferAttribute(P, 3)); out.setAttribute('normal', new T.BufferAttribute(N, 3));
-    out.setAttribute('color', new T.BufferAttribute(C, 3)); out.computeBoundingSphere();
-    return out;
-  }
-  const sph = (r, w = 18, h = 12) => new T.SphereGeometry(r, w, h);
-  const cap = (r, frac) => new T.SphereGeometry(r, 28, 14, 0, Math.PI * 2, 0, Math.PI * frac);
-  const cyl = (rt, rb, h, seg = 24, open = false) => new T.CylinderGeometry(rt, rb, h, seg, 1, open);
-  // A limb is a tapered cylinder with rounded joints at both ends, so there are never gaps at the elbows or hips.
-  function limb(list, a, b, r, color) {
-    const A = new T.Vector3(...a), B = new T.Vector3(...b), d = B.clone().sub(A), len = d.length();
-    const e = new T.Euler().setFromQuaternion(new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 1, 0), d.normalize()));
-    list.push(prep(cyl(r * 0.92, r, len, 14, true), color, A.clone().add(B).multiplyScalar(0.5).toArray(), [e.x, e.y, e.z]));
-    list.push(prep(sph(r, 14, 10), color, a));
-    list.push(prep(sph(r * 0.92, 14, 10), color, b));
-  }
-  function hat3D(list, id, H, r) {
-    const add = (geo, c, o, rot, scl) => list.push(prep(geo, c, [H[0] + o[0], H[1] + o[1], H[2] + o[2]], rot, scl));
-    const hx = Math.PI / 2;
-    if (id === 'party') {
-      add(new T.ConeGeometry(0.13, 0.36, 24), '#2f7fe8', [0, r + 0.15, 0]); add(sph(0.05), '#ec4fa8', [0, r + 0.34, 0]);
-      add(sph(0.022), '#ffd43b', [0.06, r + 0.1, 0.09]); add(sph(0.022), '#ffd43b', [-0.07, r + 0.04, 0.08]); add(sph(0.02), '#fff', [0.02, r + 0.2, 0.06]);
-    } else if (id === 'banana') {
-      add(new T.TorusGeometry(0.2, 0.05, 10, 24, Math.PI * 0.85), '#f5d02a', [-0.03, r - 0.13, 0], [0, 0, 0.3]);
-    } else if (id === 'fez') {
-      add(cyl(0.13, 0.17, 0.2), '#c8202a', [0, r + 0.05, 0]); add(cyl(0.13, 0.13, 0.012), '#a3141f', [0, r + 0.155, 0]);
-      add(cyl(0.006, 0.006, 0.17, 6), '#f5c518', [0.08, r + 0.1, 0.02], [0, 0, 1.1]); add(sph(0.032), '#f5c518', [0.15, r + 0.03, 0.03]);
-    } else if (id === 'beanie') {
-      add(cap(0.315, 0.45), '#2fb85a', [0, 0.01, 0]); add(new T.TorusGeometry(0.285, 0.045, 10, 32), '#1f8f45', [0, 0.1, 0], [hx, 0, 0]);
-      add(sph(0.08), '#eef7f0', [0, r + 0.06, 0]);
-    } else if (id === 'chef') {
-      add(cyl(0.2, 0.19, 0.15), '#ffffff', [0, r + 0.02, 0]); add(sph(0.2), '#ffffff', [0, r + 0.16, 0], 0, [1.25, 0.75, 1.25]);
-      add(sph(0.12), '#ffffff', [0.13, r + 0.19, 0]); add(sph(0.12), '#ffffff', [-0.13, r + 0.19, 0]);
-    } else if (id === 'cowboy') {
-      add(cyl(0.17, 0.21, 0.22), '#a86d36', [0, r + 0.07, 0]); add(cyl(0.215, 0.215, 0.045), '#4a2e14', [0, r - 0.01, 0]);
-      add(cyl(0.46, 0.46, 0.025, 40), '#8a5a2b', [0, r - 0.05, 0], 0, [1, 1, 0.85]);
-    } else if (id === 'pirate') {
-      add(sph(0.28), '#1c1f2b', [0, r - 0.03, 0], 0, [1.5, 0.45, 1.05]); add(cyl(0.19, 0.24, 0.17), '#1c1f2b', [0, r + 0.05, 0]);
-      add(sph(0.045), '#f2eee4', [0, r + 0.07, 0.22]);
-    } else if (id === 'headphones') {
-      add(new T.TorusGeometry(0.33, 0.025, 8, 32, Math.PI), '#3a3f52', [0, 0.02, 0]);
-      for (const sd of [-1, 1]) add(cyl(0.09, 0.09, 0.08, 20), '#2fb3c9', [sd * 0.32, 0, 0], [0, 0, hx]);
-    } else if (id === 'viking') {
-      add(cap(0.32, 0.47), '#9aa3b5', [0, 0, 0]); add(new T.TorusGeometry(0.3, 0.03, 8, 32), '#6b7488', [0, 0.05, 0], [hx, 0, 0]);
-      for (const sd of [-1, 1]) add(new T.ConeGeometry(0.055, 0.28, 12), '#f2eee4', [sd * 0.34, r - 0.02, 0], [0, 0, -sd * 0.75]);
-    } else if (id === 'hardhat') {
-      add(cap(0.33, 0.46), '#f5c518', [0, 0, 0]); add(cyl(0.37, 0.38, 0.02, 32), '#f5c518', [0, 0.07, 0.05]);
-    } else if (id === 'wizard') {
-      add(new T.ConeGeometry(0.26, 0.66, 24), '#3b2a8f', [0, r + 0.3, 0], [0, 0, 0.12]); add(cyl(0.25, 0.26, 0.05), '#f5c518', [0, r + 0.02, 0]);
-      add(cyl(0.4, 0.4, 0.025, 32), '#2a1d6b', [0, r - 0.02, 0]);
-    } else if (id === 'sombrero') {
-      add(cyl(0.1, 0.2, 0.3), '#e3c27a', [0, r + 0.12, 0]); add(cyl(0.19, 0.2, 0.05), '#2fb85a', [0, r + 0.02, 0]);
-      add(cyl(0.56, 0.56, 0.025, 40), '#e3c27a', [0, r - 0.03, 0]); add(new T.TorusGeometry(0.56, 0.018, 6, 40), '#c8202a', [0, r - 0.03, 0], [hx, 0, 0]);
-    } else if (id === 'beret') {
-      add(sph(0.3), '#7a1a3a', [0.04, r - 0.03, 0], [0, 0, -0.2], [1.15, 0.32, 1.1]); add(cyl(0.012, 0.012, 0.06, 6), '#4a0d22', [0.02, r + 0.07, 0]);
-    } else if (id === 'crown') {
-      add(cyl(0.2, 0.2, 0.13, 24, true), '#f5c518', [0, r + 0.02, 0]); add(sph(0.03), '#e8323c', [0, r + 0.02, 0.2]);
-      for (let k = 0; k < 6; k++) add(new T.ConeGeometry(0.035, 0.1, 8), '#f5c518', [Math.cos(k * Math.PI / 3) * 0.2, r + 0.13, Math.sin(k * Math.PI / 3) * 0.2]);
-    } else if (id === 'tophat') {
-      add(cyl(0.17, 0.17, 0.36), '#1c1f2b', [0, r + 0.16, 0]); add(cyl(0.175, 0.175, 0.06), '#e8323c', [0, r + 0.04, 0]);
-      add(cyl(0.3, 0.3, 0.02, 32), '#1c1f2b', [0, r - 0.02, 0]);
-    }
-  }
-  // The held needle lies along +z: tail at z=0, tip at z=len.
-  function needle3D(ni, gold) {
-    const n = NEEDLES[ni], L = [], steel = gold ? '#f5c518' : n.metal[1], hx = Math.PI / 2;
-    const rod = (r1, r2, len, c, z) => L.push(prep(cyl(r1, r2, len, 10), c, [0, 0, z + len / 2], [hx, 0, 0]));
-    const tipc = (r, len, c, z) => L.push(prep(new T.ConeGeometry(r, len, 10), c, [0, 0, z + len / 2], [hx, 0, 0]));
-    let len = 0.6;
-    if (n.kind === 'pin') { rod(0.011, 0.011, 0.47, steel, 0.03); tipc(0.011, 0.07, steel, 0.5); L.push(prep(sph(0.045), n.hc, [0, 0, 0])); len = 0.57; }
-    else if (n.kind === 'knit') { rod(0.028, 0.028, 0.5, n.hc, 0); tipc(0.028, 0.09, n.hc, 0.5); L.push(prep(sph(0.05), n.hc, [0, 0, 0])); len = 0.59; }
-    else if (n.kind === 'spine') { tipc(0.032, 0.6, gold ? steel : '#d8c27a', 0); }
-    else if (n.kind === 'quill') {
-      rod(0.024, 0.02, 0.5, gold ? steel : '#f2eee4', 0); tipc(0.02, 0.1, '#3a2a1a', 0.5);
-      rod(0.026, 0.026, 0.04, '#3a2a1a', 0.14); rod(0.026, 0.026, 0.04, '#3a2a1a', 0.22);
-    } else {
-      rod(0.014, 0.014, 0.52, steel, 0); tipc(0.014, 0.08, steel, 0.52);
-      L.push(prep(new T.TorusGeometry(0.022, 0.006, 6, 12), '#3a3f52', [0, 0, 0.04], [0, hx, 0]));
-      if (n.kind === 'gem') L.push(prep(new T.OctahedronGeometry(0.055), n.hc, [0, 0, -0.03]));
-    }
-    return { geo: mergeGeos(L), len };
-  }
-  function buildMonkey3D(m, hatId, ni, gold) {
-    const Lk = m.look, F = Lk.fur, K = Lk.face, U = Lk.suit || Lk.fur, list = [], hats = [];
-    const add = (geo, c, pos, rot, scl) => list.push(prep(geo, c, pos, rot, scl));
-    const H = [0, 1.0, 0.1], r = 0.3, at = (dx, dy, dz) => [H[0] + dx, H[1] + dy, H[2] + dz];
-    // Seat, haunches and a hunched torso
-    add(sph(0.34, 24, 16), U, [0, 0.3, -0.06], 0, [1.15, 0.8, 1.05]);
-    add(sph(0.33, 24, 16), U, [0, 0.6, 0.02], [0.3, 0, 0], [1, 1.12, 0.88]);
-    if (!Lk.suit) add(sph(0.24, 20, 14), K, [0, 0.56, 0.2], [0.3, 0, 0], [0.95, 1.1, 0.55]);
-    if (Lk.acc === 'ninja') add(new T.TorusGeometry(0.31, 0.03, 8, 32), '#b3202a', [0, 0.48, 0.03], [Math.PI / 2 - 0.3, 0, 0]);
-    // Knees up, feet flat on the ground
-    for (const sd of [-1, 1]) {
-      limb(list, [sd * 0.2, 0.3, 0.08], [sd * 0.27, 0.46, 0.34], 0.105, U);
-      limb(list, [sd * 0.27, 0.46, 0.34], [sd * 0.25, 0.1, 0.38], 0.085, U);
-      add(sph(0.1, 16, 10), K, [sd * 0.25, 0.05, 0.45], 0, [0.95, 0.45, 1.5]);
-    }
-    // Tail curled round on the ground
-    const tail = new T.CatmullRomCurve3([[0, 0.24, -0.32], [0.12, 0.06, -0.55], [0.42, 0.05, -0.5], [0.55, 0.18, -0.25], [0.48, 0.32, -0.12]].map(q => new T.Vector3(...q)));
-    add(new T.TubeGeometry(tail, 28, 0.04, 8), F, [0, 0, 0]);
-    add(sph(0.04, 8, 6), F, [0.48, 0.32, -0.12]);
-    // One long arm resting knuckles-down, the other reaching forward with the needle
-    limb(list, [-0.27, 0.82, 0.04], [-0.38, 0.46, 0.2], 0.078, U);
-    limb(list, [-0.38, 0.46, 0.2], [-0.36, 0.1, 0.32], 0.07, U);
-    add(sph(0.088, 16, 10), K, [-0.36, 0.07, 0.34], 0, [1, 0.6, 1.25]);
-    const paw = [0.32, 0.8, 0.6];
-    limb(list, [0.27, 0.82, 0.04], [0.4, 0.72, 0.3], 0.078, U);
-    limb(list, [0.4, 0.72, 0.3], paw, 0.07, U);
-    add(sph(0.092, 16, 10), K, paw);
-    // Head sits low and forward on the shoulders (it overlaps the torso, so there is no neck gap)
-    add(sph(r, 28, 20), F, H);
-    for (const sd of [-1, 1]) {
-      add(sph(0.11, 16, 10), F, at(sd * 0.29, 0.03, -0.03), 0, [1, 1, 0.45]);
-      add(sph(0.07, 12, 8), K, at(sd * 0.305, 0.03, 0.0), 0, [1, 1, 0.4]);
-    }
-    add(sph(0.2, 20, 12), F, at(0, 0.1, 0.12), 0, [1.15, 0.35, 0.6]);
-    add(sph(0.22, 24, 16), K, at(0, -0.02, 0.14), 0, [1.12, 0.95, 0.62]);
-    add(sph(0.13, 20, 12), K, at(0, -0.11, 0.23), 0, [1.25, 0.85, 0.8]);
-    if (Lk.acc === 'cheeks') for (const sd of [-1, 1]) add(sph(0.16), K, at(sd * 0.23, -0.04, 0.1), 0, [1, 0.95, 0.45]);
-    if (Lk.acc === 'ninja') {
-      add(cyl(0.3, 0.3, 0.1, 32, true), '#b3202a', at(0, 0.035, 0));
-      for (const sd of [-1, 1]) add(sph(0.06, 12, 8), '#ffffff', at(sd * 0.085, 0.035, 0.245));
-    }
-    for (const sd of [-1, 1]) {
-      add(sph(0.047, 12, 8), '#1c1f2b', at(sd * 0.085, 0.035, 0.265));
-      add(sph(0.014, 8, 6), '#ffffff', at(sd * 0.085 + 0.016, 0.05, 0.305));
-      add(sph(0.017, 8, 6), '#2a1a10', at(sd * 0.03, -0.08, 0.33));
-    }
-    add(new T.TorusGeometry(0.05, 0.011, 6, 12, Math.PI), '#2a1a10', at(0, -0.15, 0.305), [0, 0, Math.PI]);
-    if (Lk.acc === 'tuft') { add(new T.ConeGeometry(0.05, 0.14, 8), F, at(-0.03, r + 0.04, 0.02), [0, 0, 0.3]); add(new T.ConeGeometry(0.05, 0.14, 8), F, at(0.04, r + 0.04, 0), [0, 0, -0.3]); }
-    if (Lk.acc === 'headband') {
-      add(new T.TorusGeometry(0.285, 0.03, 8, 32), '#e8323c', at(0, 0.12, 0), [Math.PI / 2, 0, 0]);
-      for (const sd of [-1, 1]) add(new T.BoxGeometry(0.03, 0.2, 0.05), '#e8323c', at(sd * 0.06, 0.02, -0.3), [0.3, 0, sd * 0.3]);
-    }
-    const helmet = Lk.acc === 'helmet';
-    if (helmet) add(new T.TorusGeometry(0.22, 0.05, 10, 28), '#e6eaf2', at(0, -0.3, 0), [Math.PI / 2, 0, 0]);
-    if (hatId) {
-      hat3D(hats, hatId, H, r);
-      if (helmet) hats.forEach(g => { g.translate(-H[0], -H[1], -H[2]); g.scale(1.45, 1.45, 1.45); g.translate(H[0], H[1], H[2]); });
-      list.push(...hats);
-    }
-    const body = mergeGeos(list), nd = needle3D(ni, gold);
-    nd.geo.translate(paw[0], paw[1], paw[2] - 0.14);
-    const group = new T.Group(), geos = [body, nd.geo];
-    group.add(new T.Mesh(body, R3.mats.fur), new T.Mesh(nd.geo, R3.mats.metal));
-    if (helmet) {
-      const gl = sph(0.44, 28, 20); gl.translate(...H); geos.push(gl);
-      group.add(new T.Mesh(gl, R3.mats.glass));
-    }
-    return { group, geos, tip: new T.Vector3(paw[0], paw[1], paw[2] - 0.14 + nd.len), throwPaw: new T.Vector3(-0.36, 0.07, 0.34) };
-  }
-  function place3D(key, m, x, y, size, z, yaw, lean, gold) {
-    const tk = `${m.id}|${S.mhat}|${S.needle}|${gold ? 1 : 0}`;
-    let tpl = R3.tpl.get(tk);
-    if (!tpl) { tpl = buildMonkey3D(m, S.mhat, S.needle, gold); R3.tpl.set(tk, tpl); }
-    let o = R3.pool.get(key);
-    if (!o || o.userData.tk !== tk) { if (o) R3.scene.remove(o); o = tpl.group.clone(); o.userData.tk = tk; R3.scene.add(o); R3.pool.set(key, o); }
-    o.userData.seen = R3.frame;
-    const k = size * 0.9;
-    o.scale.setScalar(k);
-    o.rotation.set(lean, yaw, 0, 'YXZ');
-    o.position.set(x, -y - 0.62 * k, z);
-    o.updateMatrixWorld(true);
-    const tip = tpl.tip.clone().applyMatrix4(o.matrixWorld), tp = tpl.throwPaw.clone().applyMatrix4(o.matrixWorld);
-    return { tipX: tip.x, tipY: -tip.y, throwX: tp.x, throwY: -tp.y };
-  }
-  function render3D(bcx, bcy, brx, bry) {
-    R3.pool.forEach((o, k) => { if (o.userData.seen !== R3.frame) { R3.scene.remove(o); R3.pool.delete(k); } });
-    R3.occ.position.set(bcx, -bcy, 0); R3.occ.scale.set(brx, bry, brx * 0.85);
-    R3.renderer.render(R3.scene, R3.camera);
-    R3.frame++;
   }
 
   // Photo monkeys: the real photograph, flipped so the needle paw faces the balloon, with the hat photo on its head.
@@ -2103,12 +1981,12 @@
   function drawCrew(dt, now) {
     bx.clearRect(0, 0, innerWidth, innerHeight);
     monkeySpots = [];
-    const mode = S.opt.real ? 'photo' : (S.opt.style === 'body' && R3) ? '3d' : '2d';
-    if (R3) R3.cv.style.display = mode === '3d' ? '' : 'none';
+    const mode = S.opt.real ? 'photo' : '2d';
     const b = balloon.getBoundingClientRect();
     const bcx = b.left + b.width / 2, bcy = b.top + b.height * 0.56, brx = b.width * 0.4, bry = b.height * 0.278;
-    if (!$('ascent').hidden) { if (mode === '3d') render3D(bcx, bcy, brx, bry); return; }
+    if (!$('ascent').hidden) return;
     const t = now / 1000, speedScale = reduceMotion ? 0.15 : 1;
+    const onStrike = S.boosts.some(bst => bst.kind === 'strike' && bst.until > Date.now());
     const orbit = MINIONS.filter(m => m.role === 'orbit' && S.minions[m.id]);
     const throwers = MINIONS.filter(m => m.role === 'throw' && S.minions[m.id]);
     const MAX_EACH = 8;
@@ -2118,7 +1996,10 @@
     const base = (S.opt.style === 'head' && !S.opt.real ? 50 : 56) * scale;
     const size = Math.max(26, Math.min(base, base * Math.sqrt(14 / Math.max(N, 1))));
 
-    // Circling monkeys: one ring per type, stacked top to bottom in shop order.
+    // Circling monkeys: one ring per type, stacked top to bottom in shop order. Monkeys are collected
+    // first and drawn back-to-front by screen position, so a needle from one monkey never paints over
+    // the body of a different monkey standing in front of it.
+    const frontQ = [], backQ = [];
     orbit.forEach((m, i) => {
       const n = Math.min(S.minions[m.id], MAX_EACH), gold = tierOf(m) >= 3;
       const f = orbit.length === 1 ? -0.1 : -0.62 + 1.24 * i / (orbit.length - 1);
@@ -2132,26 +2013,32 @@
         let x = bcx + Math.cos(a) * rx, y = yRow + depth * ry;
         const front = depth > 0;
         let jabbing = false;
-        if (front && t > st.next && !reduceMotion) { st.jab = 0.22; st.next = t + 1.2 + Math.random() * 2.2; jabbing = true; }
+        const striking = onStrike && j % 2 === 1;
+        if (front && t > st.next && !striking) { st.jab = 0.22; st.next = t + 1.2 + Math.random() * 2.2; jabbing = true; }
         if (st.jab > 0) {
           st.jab -= dt;
           x += (bcx - x) * Math.sin(Math.PI * (1 - st.jab / 0.22)) * 0.18;
         }
         const s = size * (0.84 + 0.16 * (depth + 1) / 2);
-        let hit;
-        if (mode === '3d') {
-          hit = place3D(key, m, x, y, size, depth * rx, Math.atan2(-Math.cos(a), -depth + 0.6), 0, gold);
-        } else if (mode === 'photo') {
-          const fp = Math.max(-1, Math.min(1, (bcx - x) / (size * 0.7)));
-          hit = drawPhotoMonkey(front ? cx : bx, m.id, x, y, s, Math.sign(fp || 1) * Math.max(0.3, Math.abs(fp)), bcx, yRow, gold);
-        } else {
-          const turn = Math.max(-1, Math.min(1, -Math.cos(a) * 2.2));
-          hit = drawMonkey(front ? cx : bx, m.id, x, y, s, Math.sign(turn || 1) * Math.max(0.25, Math.abs(turn)), bcx, yRow, gold);
-        }
-        if (jabbing) { burst(hit.tipX, hit.tipY, 5); autoPop(0.1); }
-        if (front) monkeySpots.push({ x, y, id: m.id });
+        (front ? frontQ : backQ).push({ id: m.id, x, y, a, s, yRow, gold, jabbing });
       }
     });
+    // Turning smoothly through face-on (rather than snapping between a fixed left/right pose) is what
+    // keeps the crossing point at the front/back of the orbit from looking like a jump-cut.
+    const drawOrbitMonkey = (ctx, p, pushSpot) => {
+      let hit;
+      if (mode === 'photo') {
+        const fp = Math.max(-1, Math.min(1, (bcx - p.x) / (size * 0.7)));
+        hit = drawPhotoMonkey(ctx, p.id, p.x, p.y, p.s, fp, bcx, p.yRow, p.gold);
+      } else {
+        const turn = Math.max(-1, Math.min(1, -Math.cos(p.a) * 2.2));
+        hit = drawMonkey(ctx, p.id, p.x, p.y, p.s, turn, bcx, p.yRow, p.gold);
+      }
+      if (p.jabbing) { burst(hit.tipX, hit.tipY, 5); autoPop(0.1); }
+      if (pushSpot) monkeySpots.push({ x: p.x, y: p.y, id: p.id });
+    };
+    backQ.sort((p, q) => p.y - q.y).forEach(p => drawOrbitMonkey(bx, p, false));
+    frontQ.sort((p, q) => p.y - q.y).forEach(p => drawOrbitMonkey(cx, p, true));
 
     // Dart throwers stand well back from the balloon: one row per type, stacked in shop order, split either side.
     throwers.forEach((m, i) => {
@@ -2165,10 +2052,9 @@
         const x = bcx + side * (start + col * gap), y = yRow + Math.sin(t * 2 + j + i) * 2 + (col % 2 ? size * 0.12 : 0);
         st.kick = Math.max(0, st.kick - dt);
         let hit;
-        if (mode === '3d') hit = place3D(key, m, x, y, size * (1 + st.kick * 0.3), 40, side < 0 ? 0.95 : -0.95, st.kick * 2.5, gold);
-        else if (mode === 'photo') hit = drawPhotoMonkey(cx, m.id, x, y, size * (1 + st.kick * 0.5), side < 0 ? 1 : -1, bcx, yRow, gold);
+        if (mode === 'photo') hit = drawPhotoMonkey(cx, m.id, x, y, size * (1 + st.kick * 0.5), side < 0 ? 1 : -1, bcx, yRow, gold);
         else hit = drawMonkey(cx, m.id, x, y, size * (1 + st.kick * 0.8), side > 0 ? -1 : 1, bcx, yRow, gold);
-        if (t > st.next) {
+        if (t > st.next && !(onStrike && j % 2 === 1)) {
           st.next = t + m.every * (0.8 + Math.random() * 0.4); st.kick = 0.18;
           const tx = bcx + (Math.random() - 0.5) * brx, ty = bcy + (Math.random() - 0.5) * bry;
           for (let d = 0; d < m.darts; d++) {
@@ -2180,7 +2066,6 @@
         monkeySpots.push({ x, y, id: m.id });
       }
     });
-    if (mode === '3d') render3D(bcx, bcy, brx, bry);
 
     if (monkeySpots.length && t > nextCall) {
       if (nextCall) {
@@ -2532,7 +2417,7 @@
     if (!text) { blimpOn = false; return; }
     blimpOn = true;
     const b = document.createElement('button');
-    b.type = 'button'; b.className = 'blimp';
+    b.type = 'button'; b.className = 'blimp ' + (Math.random() < 0.5 ? 'ltr' : 'rtl');
     b.setAttribute('aria-label', `Breaking news: ${text}. Open the Monkey Union panel`);
     b.innerHTML = `${BLIMP_SVG}<span class="rope"></span><span class="banner">${esc(text)}</span>`;
     b.addEventListener('click', () => toggleSide(true));
@@ -2541,14 +2426,133 @@
     if (reduceMotion) setTimeout(done, 6000); else b.addEventListener('animationend', done);
   }
 
+  // ---------- Random cameos: bunnies acting out scenes from pop fiction, run across the bottom ----------
+  // A side-view bunny in mid-stride, feet at local y=0, standing ~60 tall. `accessory` is extra SVG
+  // drawn in the same local space (sunglasses, a suit, spikes, ...), layered on top of the ears.
+  function cameoBunny({ fur = '#e8ddc9', ear = null, lean = 6, earAngle = 18, pose = 'run', accessory = '', scale = 1 } = {}) {
+    ear = ear || shade(fur, -0.12);
+    const legs = pose === 'run'
+      ? `<path d="M-6 -18 L-16 -2 L-9 0 L-1 -16 Z" fill="${fur}"/><path d="M6 -16 L15 -3 L21 -5 L11 -18 Z" fill="${fur}"/>`
+      : pose === 'walk'
+      ? `<path d="M-7 -18 L-9 0 L-2 0 L-1 -18 Z" fill="${fur}"/><path d="M3 -18 L4 0 L11 0 L9 -18 Z" fill="${fur}"/>`
+      : '';
+    return `<g transform="scale(${scale}) rotate(${lean})">
+      ${legs}
+      <ellipse cx="0" cy="-24" rx="14" ry="11" fill="${fur}"/>
+      <circle cx="-1" cy="-15" r="3.4" fill="${fur}"/>
+      <circle cx="9" cy="-38" r="9.5" fill="${fur}"/>
+      <g transform="translate(9 -46) rotate(${-earAngle})"><ellipse cx="-4" cy="-13" rx="3.6" ry="14" fill="${ear}"/></g>
+      <g transform="translate(9 -46) rotate(${earAngle})"><ellipse cx="4" cy="-13" rx="3.6" ry="14" fill="${ear}"/></g>
+      ${accessory}
+      <circle cx="12.5" cy="-38.5" r="1.3" fill="#1c1f2b"/>
+      <ellipse cx="16" cy="-35" rx="2" ry="1.4" fill="${shade(fur, -0.25)}"/>
+    </g>`;
+  }
+  const cameoShades = `<rect x="6" y="-40.5" width="12" height="4.2" rx="1.4" fill="#1c1f2b"/><rect x="17" y="-39.8" width="4" height="3" rx="1" fill="#1c1f2b"/>`;
+  // Head circle cy=-38 r=9.5 (top ~-47.5); body ellipse cy=-24 ry=11 (spans -35..-13) - a torso wrap
+  // (suit, hoodie, jumpsuit) needs to sit in that band to read as clothing rather than a floating patch.
+  const cameoTorso = (color, hi) => `<path d="M-12 -34 Q0 -23 12 -34 L10 -13 Q0 -9 -10 -13 Z" fill="${color}"/>${hi || ''}`;
+  const CAMEOS = [
+    // Fear and Loathing in Las Vegas: an overloaded red convertible, sunglasses on, junk flying off the back.
+    () => {
+      const car = `<g><ellipse cx="70" cy="2" rx="78" ry="6" fill="rgba(0,0,0,0.18)"/>
+        <path d="M-6 -6 Q-6 -30 30 -30 L118 -30 Q140 -30 140 -10 L140 -6 Z" fill="#c8202a"/>
+        <path d="M14 -30 Q14 -48 40 -48 L88 -48 Q100 -48 100 -30 Z" fill="#8fd0e8" opacity="0.85"/>
+        <rect x="-6" y="-10" width="146" height="10" rx="4" fill="#9e1420"/>
+        <circle cx="14" cy="0" r="11" fill="#22232b"/><circle cx="14" cy="0" r="4" fill="#8a8f9c"/>
+        <circle cx="112" cy="0" r="11" fill="#22232b"/><circle cx="112" cy="0" r="4" fill="#8a8f9c"/></g>`;
+      const junk = `<g opacity="0.9"><rect x="150" y="-42" width="10" height="7" rx="1.5" fill="#f5c518" transform="rotate(18 155 -38)"/>
+        <circle cx="168" cy="-26" r="4" fill="#2fb85a"/><rect x="158" y="-16" width="8" height="11" rx="1" fill="#8a5a2b" transform="rotate(-12 162 -10)"/></g>`;
+      return { label: 'a red convertible speeding by, way too overloaded for a trip to Vegas', w: 420, h: 140,
+        svg: `<svg viewBox="-20 -66 210 70">${junk}${car}
+          <g transform="translate(34 -8)">${cameoBunny({ fur: '#c9c4bc', ear: '#a89f92', lean: -4, earAngle: 26, pose: 'none', accessory: cameoShades })}</g>
+          <g transform="translate(68 -8)">${cameoBunny({ fur: '#e8ddc9', ear: '#cbbfa0', lean: 6, earAngle: -10, pose: 'none', accessory: cameoShades })}</g>
+        </svg>` };
+    },
+    // A pair of wiseguys in dark suits, jogging across in a hurry.
+    () => {
+      const suit = color => cameoTorso(color, `<path d="M-1.5 -33 L1.5 -33 L3 -14 L-3 -14 Z" fill="#8a1420"/>`);
+      return { label: 'two wiseguys in dark suits making a run for it', w: 340, h: 130,
+        svg: `<svg viewBox="-20 -60 160 62">
+          <g transform="translate(20 0)">${cameoBunny({ fur: '#8a5a2b', ear: '#6a4620', lean: 8, earAngle: 14, pose: 'run', accessory: suit('#22232b') + cameoShades })}</g>
+          <g transform="translate(85 0)">${cameoBunny({ fur: '#3a3f52', ear: '#22263a', lean: 10, earAngle: 20, pose: 'run', accessory: suit('#2a2b35') + cameoShades })}</g>
+        </svg>` };
+    },
+    // Two slackers outside the Quick Stop: one gesturing and talking, the other silent in a hoodie.
+    () => {
+      const cap = `<path d="M-1 -48 Q9 -54 18 -48 Q17 -44 8 -44.5 Q-1 -45 -1 -48 Z" fill="#e8323c"/><rect x="13" y="-47.5" width="6" height="3" rx="1" fill="#a3141f"/>`;
+      const arm = `<path d="M13 -30 Q26 -32 32 -44" stroke="#e8ddc9" stroke-width="5" stroke-linecap="round" fill="none"/>`;
+      const hoodie = cameoTorso('#5a3a22', `<path d="M8 -35 Q13 -45 6 -49" stroke="#5a3a22" stroke-width="4" fill="none" stroke-linecap="round"/>`);
+      const arms2 = `<path d="M-10 -28 Q-17 -22 -16 -14" stroke="#8a5a2b" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M10 -28 Q17 -22 16 -14" stroke="#8a5a2b" stroke-width="5" stroke-linecap="round" fill="none"/>`;
+      return { label: 'a couple of slackers hanging around out front, one of them will not stop talking', w: 320, h: 130,
+        svg: `<svg viewBox="-20 -60 150 62">
+          <g transform="translate(20 0)">${cameoBunny({ fur: '#e8ddc9', ear: '#cbbfa0', lean: 4, earAngle: 24, pose: 'walk', accessory: cap + arm })}</g>
+          <g transform="translate(80 0)">${cameoBunny({ fur: '#8a5a2b', ear: '#6a4620', lean: 0, earAngle: 8, pose: 'walk', accessory: hoodie + arms2 })}</g>
+        </svg>` };
+    },
+    // A wasteland courier in a vault jumpsuit, fleeing a big spiky monster with claws out.
+    () => {
+      const suitV = cameoTorso('#2f4fb0', `<rect x="-3" y="-31" width="6" height="5" fill="#f5c518"/>`);
+      const spikes = [0, 1, 2, 3].map(i => `<path d="M${-6 + i * 6} -${40 + i % 2 * 4} l3 -9 l3 9 Z" fill="#2fb85a"/>`).join('');
+      const clawArm = `<path d="M12 -28 Q22 -28 27 -20" stroke="#3a7a2f" stroke-width="6" stroke-linecap="round" fill="none"/>
+        <path d="M27 -20 l6 -3 M27 -20 l7 1 M27 -20 l5 5" stroke="#1c1f2b" stroke-width="2" stroke-linecap="round"/>`;
+      return { label: 'a courier sprinting flat out from something with way too many claws', w: 400, h: 142,
+        svg: `<svg viewBox="-20 -68 190 70">
+          <g transform="translate(24 0)">${cameoBunny({ fur: '#e6c27a', ear: '#c9a35a', lean: 8, earAngle: 16, pose: 'run', accessory: suitV })}</g>
+          <g transform="translate(96 0) scale(1.35)">${cameoBunny({ fur: '#5a8a4a', ear: '#3a6a2f', lean: 14, earAngle: 30, pose: 'run', accessory: spikes + clawArm })}</g>
+        </svg>` };
+    },
+  ];
+  let nextCameoAt = Date.now() + (150 + Math.random() * 250) * 1000;
+  const CAMEO_BONUS_MULT = 2, CAMEO_BONUS_SECS = 120;
+  function maybeSpawnCameo(now) {
+    if (now < nextCameoAt) return;
+    nextCameoAt = now + (240 + Math.random() * 360) * 1000;
+    const scene = pick(CAMEOS)();
+    const el = document.createElement('button');
+    el.type = 'button';
+    const dir = Math.random() < 0.5 ? 'ltr' : 'rtl';
+    el.className = 'cameo ' + dir;
+    el.setAttribute('aria-label', `A sighting of ${scene.label}. Tap for a bonus`);
+    el.style.setProperty('animation-duration', Math.max(5, scene.w / 90) + 's');
+    el.innerHTML = `<div class="cameo-flip">${scene.svg.replace('<svg ', `<svg width="${scene.w}" height="${scene.h}" `)}</div>`;
+    $('cameos').appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+    el.addEventListener('click', () => {
+      const r = el.getBoundingClientRect();
+      S.boosts = S.boosts.filter(b => b.kind !== 'cameo');
+      S.boosts.push({ mult: CAMEO_BONUS_MULT, until: Date.now() + CAMEO_BONUS_SECS * 1000, kind: 'cameo', click: true });
+      burst(r.left + r.width / 2, r.top + r.height / 2, 18);
+      floatText(r.left + r.width / 2, r.top + r.height * 0.3, `×${CAMEO_BONUS_MULT} pops for ${CAMEO_BONUS_SECS / 60}m!`);
+      toast(`Spotted! Every pop is worth ${CAMEO_BONUS_MULT}× for the next ${CAMEO_BONUS_SECS / 60} minutes.`);
+      autoPop(0.4);
+      el.remove();
+    });
+    postFeed('sighting', pick(MINIONS).id, `A passing monkey swears it just saw ${scene.label}.`);
+  }
+
+  let lowRelWarned = false;
   function feedTick() {
     const now = Date.now(), mine = owned();
     S.boosts = S.boosts.filter(bst => bst.until > now);
     const has = kind => S.boosts.some(bst => bst.kind === kind);
+    // Below 20% the union is in open revolt: a one-off warning on the way down, and an escalating
+    // chance each tick that half the crew walks out for a while (more likely the lower it goes).
+    if (S.rel < 20) {
+      if (!lowRelWarned) { lowRelWarned = true; toast('Union standing has collapsed below 20%. Expect the monkeys to start striking.'); }
+    } else if (S.rel > 30) lowRelWarned = false;
     if (mine.length && S.rel < 25 && !has('slow') && Math.random() < 1 / 60) {
       S.boosts.push({ mult: 0.6, until: now + 60000, kind: 'slow' });
       postFeed('union', pick(mine).id, `Go-slow! Union standing is ${relName().toLowerCase()}, so the monkeys are working at 60% for a minute.`);
       blimp('Union go-slow in progress');
+    }
+    if (mine.length && S.rel < 20 && !has('strike')) {
+      const severity = (20 - S.rel) / 20;
+      if (Math.random() < 0.004 + severity * severity * 0.05) {
+        S.boosts.push({ mult: 0.5, until: now + (45 + Math.random() * 30) * 1000, kind: 'strike' });
+        postFeed('union', pick(mine).id, `Walkout! Standing is ${relName().toLowerCase()}, so half the crew has downed pins and walked out for a while.`);
+        blimp('Half the monkeys are on strike');
+      }
     }
     if (mine.length && S.rel > 80 && !has('keen') && Math.random() < 1 / 80) {
       S.boosts.push({ mult: 1.2, until: now + 60000, kind: 'keen' });
@@ -2614,7 +2618,7 @@
     for (let x = 0; x <= 100; x += 4) { top.push(`${x}% ${(Math.random() * 1.6).toFixed(2)}%`); bot.push(`${100 - x}% ${(98.4 + Math.random() * 1.6).toFixed(2)}%`); }
     return `polygon(${top.join(',')},${bot.join(',')})`;
   });
-  const LABEL = { complaint: 'Complaint', union: 'Union', event: 'Event' };
+  const LABEL = { complaint: 'Complaint', union: 'Union', event: 'Event', sighting: 'Sighting' };
   const side = $('side'), sideTab = $('sideTab');
   function renderSide() {
     const badge = $('sideBadge');
@@ -2647,35 +2651,71 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && side.classList.contains('open') && $('settings').hidden) toggleSide(false); });
 
   // ---------- Backgrounds ----------
-  const leaf = (x, y, r, sc, c) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${sc})"><path d="M0 0 C40 -60 140 -60 200 0 C140 40 40 40 0 0 Z" fill="${c}"/><path d="M0 0 L190 0" stroke="rgba(0,0,0,0.25)" stroke-width="3"/></g>`;
+  // The outer <g> holds the static position (a plain SVG attribute); the inner .sway <g> gets its own
+  // small CSS-animated rotation layered on top, so the two transforms don't fight each other.
+  const leaf = (x, y, r, sc, c, delay = 0) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${sc})">
+    <g class="sway" style="animation-delay:${delay}s"><path d="M0 0 C40 -60 140 -60 200 0 C140 40 40 40 0 0 Z" fill="${c}"/><path d="M0 0 L190 0" stroke="rgba(0,0,0,0.25)" stroke-width="3"/></g></g>`;
   const palm = (x, f) => `<path d="M${x} 640 Q${x + 30 * f} 470 ${x + 70 * f} 330" stroke="#7a5230" stroke-width="18" fill="none" stroke-linecap="round"/>` +
     [[-120, 20], [-90, -60], [0, -90], [90, -50], [130, 30]].map(([dx, dy]) =>
       `<path d="M${x + 70 * f} 330 q ${dx * 0.5} ${dy - 30} ${dx} ${dy + 40}" stroke="#2f8a3c" stroke-width="16" fill="none" stroke-linecap="round"/>`).join('');
   let waves = 'M0 470';
   for (let x = 0; x < 1200; x += 60) waves += ` q 30 -12 60 0`;
   const WRAP = inner => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">${inner}</svg>`;
+  const gull = (x, y, delay) => `<path class="gull" d="M${x} ${y} q10 -10 20 0 q10 -10 20 0" fill="none" stroke="#2a2418" stroke-width="2.5" stroke-linecap="round" style="animation-delay:${delay}s"/>`;
   const BEACH = WRAP(`<defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6ec6ff"/><stop offset="1" stop-color="#ffe3b3"/></linearGradient></defs>
-    <rect width="1200" height="800" fill="url(#s)"/><circle cx="930" cy="170" r="110" fill="#fff3b0" opacity="0.3"/><circle cx="930" cy="170" r="70" fill="#fff3b0"/>
-    <rect y="470" width="1200" height="140" fill="#2aa7c9"/><path d="${waves} L1200 490 L0 490 Z" fill="#7ad6ea"/>
+    <style>
+      .shimmer { animation: shimmer 5s ease-in-out infinite; }
+      @keyframes shimmer { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(18px); } }
+      .sun { animation: glow 4s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+      @keyframes glow { 0%, 100% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(1.12); opacity: 0.45; } }
+      .gull { animation: flap 1.4s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+      @keyframes flap { 0%, 100% { transform: scaleY(1) translateY(0); } 50% { transform: scaleY(0.55) translateY(2px); } }
+      @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+    </style>
+    <rect width="1200" height="800" fill="url(#s)"/><circle class="sun" cx="930" cy="170" r="110" fill="#fff3b0" opacity="0.3"/><circle cx="930" cy="170" r="70" fill="#fff3b0"/>
+    ${gull(180, 110, 0)}${gull(230, 90, 0.3)}${gull(620, 140, 0.6)}
+    <rect y="470" width="1200" height="140" fill="#2aa7c9"/><path class="shimmer" d="${waves} L1200 490 L0 490 Z" fill="#7ad6ea"/>
     <path d="M0 600 Q300 560 600 590 T1200 580 L1200 800 L0 800 Z" fill="#f2d49b"/>${palm(110, 1)}${palm(1090, -1)}`);
+  const firefly = (x, y, delay) => `<circle class="firefly" cx="${x}" cy="${y}" r="3.2" fill="#e8ff8a" style="animation-delay:${delay}s"/>`;
   const JUNGLE = WRAP(`<defs><linearGradient id="j" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f9b5c"/><stop offset="1" stop-color="#12391f"/></linearGradient></defs>
+    <style>
+      .sway { transform-box: fill-box; transform-origin: 4% 50%; animation: leafsway 4s ease-in-out infinite; }
+      @keyframes leafsway { 50% { transform: rotate(5deg); } }
+      .firefly { animation: flicker 2.6s ease-in-out infinite; filter: drop-shadow(0 0 3px #e8ff8a); }
+      @keyframes flicker { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.95; } }
+      @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+    </style>
     <rect width="1200" height="800" fill="url(#j)"/>
     <polygon points="500,0 620,0 900,800 700,800" fill="#fff" opacity="0.06"/><polygon points="760,0 820,0 1100,800 980,800" fill="#fff" opacity="0.05"/>
     ${[80, 260, 940, 1110].map((x, i) => `<path d="M${x} 0 Q${x + 30} 200 ${x - 10} ${300 + i * 60}" stroke="#1f5c2e" stroke-width="7" fill="none"/>`).join('')}
-    ${leaf(-40, 120, 20, 1.2, '#1e6b34')}${leaf(-60, 300, -10, 1.4, '#2c8a45')}${leaf(-30, 620, -30, 1.6, '#175a2b')}${leaf(40, 780, -60, 1.5, '#1e6b34')}
-    ${leaf(1240, 90, 160, 1.3, '#2c8a45')}${leaf(1260, 330, 190, 1.5, '#1e6b34')}${leaf(1230, 640, 210, 1.6, '#175a2b')}${leaf(1150, 800, 240, 1.4, '#2c8a45')}
-    ${leaf(420, -40, 70, 1.1, '#175a2b')}${leaf(760, -50, 110, 1.1, '#1e6b34')}`);
+    ${leaf(-40, 120, 20, 1.2, '#1e6b34', 0)}${leaf(-60, 300, -10, 1.4, '#2c8a45', 0.6)}${leaf(-30, 620, -30, 1.6, '#175a2b', 1.2)}${leaf(40, 780, -60, 1.5, '#1e6b34', 1.8)}
+    ${leaf(1240, 90, 160, 1.3, '#2c8a45', 0.3)}${leaf(1260, 330, 190, 1.5, '#1e6b34', 0.9)}${leaf(1230, 640, 210, 1.6, '#175a2b', 1.5)}${leaf(1150, 800, 240, 1.4, '#2c8a45', 2.1)}
+    ${leaf(420, -40, 70, 1.1, '#175a2b', 0.4)}${leaf(760, -50, 110, 1.1, '#1e6b34', 1)}
+    ${firefly(340, 520, 0)}${firefly(520, 610, 0.7)}${firefly(700, 480, 1.4)}${firefly(880, 590, 0.3)}${firefly(460, 380, 2)}${firefly(950, 420, 1.1)}`);
   let stars = '';
-  for (let i = 0; i < 170; i++) stars += `<circle cx="${(Math.random() * 1200).toFixed(0)}" cy="${(Math.random() * 800).toFixed(0)}" r="${(0.6 + Math.random() * 1.4).toFixed(1)}" fill="#fff" opacity="${(0.4 + Math.random() * 0.6).toFixed(2)}"/>`;
+  for (let i = 0; i < 170; i++) {
+    const tw = i % 3 === 0 ? ` class="tw" style="animation-delay:${(Math.random() * 3).toFixed(2)}s"` : '';
+    stars += `<circle${tw} cx="${(Math.random() * 1200).toFixed(0)}" cy="${(Math.random() * 800).toFixed(0)}" r="${(0.6 + Math.random() * 1.4).toFixed(1)}" fill="#fff" opacity="${(0.4 + Math.random() * 0.6).toFixed(2)}"/>`;
+  }
   const SPACE = WRAP(`<defs><linearGradient id="k" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070a1f"/><stop offset="1" stop-color="#1a1248"/></linearGradient>
     <radialGradient id="neb"><stop offset="0" stop-color="#9b4dff" stop-opacity="0.35"/><stop offset="1" stop-color="#9b4dff" stop-opacity="0"/></radialGradient>
-    <radialGradient id="pl" cx="0.35" cy="0.35"><stop offset="0" stop-color="#ffc78a"/><stop offset="1" stop-color="#b3541e"/></radialGradient></defs>
+    <radialGradient id="pl" cx="0.35" cy="0.35"><stop offset="0" stop-color="#ffc78a"/><stop offset="1" stop-color="#b3541e"/></radialGradient>
+    <radialGradient id="pl2" cx="0.35" cy="0.35"><stop offset="0" stop-color="#8adfc9"/><stop offset="1" stop-color="#1e6b5c"/></radialGradient></defs>
+    <style>
+      .tw { animation: twinkle 2.4s ease-in-out infinite; }
+      @keyframes twinkle { 0%, 100% { opacity: 0.15; } 50% { opacity: 1; } }
+      .shooting { animation: shoot 9s linear infinite; }
+      @keyframes shoot { 0% { transform: translate(0, 0); opacity: 0; } 2% { opacity: 1; } 15% { transform: translate(260px, 130px); opacity: 0; } 100% { transform: translate(260px, 130px); opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+    </style>
     <rect width="1200" height="800" fill="url(#k)"/><ellipse cx="300" cy="560" rx="380" ry="200" fill="url(#neb)"/>${stars}
+    <g class="shooting"><line x1="140" y1="70" x2="200" y2="100" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></g>
     <circle cx="1000" cy="160" r="70" fill="url(#pl)"/><ellipse cx="1000" cy="160" rx="120" ry="22" fill="none" stroke="#f1d3a8" stroke-width="6" opacity="0.8" transform="rotate(-15 1000 160)"/>
-    <circle cx="170" cy="130" r="22" fill="#d9dce6"/><circle cx="163" cy="124" r="5" fill="#b8bccb"/>`);
+    <circle cx="170" cy="130" r="22" fill="#d9dce6"/><circle cx="163" cy="124" r="5" fill="#b8bccb"/>
+    <circle cx="80" cy="640" r="34" fill="url(#pl2)"/>`);
   const BGS = {
     plain: '',
-    sky: `radial-gradient(ellipse 30% 12% at 20% 22%, rgba(255,255,255,0.9), transparent 70%), radial-gradient(ellipse 25% 10% at 78% 35%, rgba(255,255,255,0.85), transparent 70%), radial-gradient(ellipse 35% 12% at 60% 12%, rgba(255,255,255,0.7), transparent 70%), radial-gradient(ellipse 30% 10% at 30% 70%, rgba(255,255,255,0.6), transparent 70%), linear-gradient(#5aa9f0, #bfe3ff 70%, #e8f6ff)`,
+    sky: `radial-gradient(circle 46px at 85% 14%, #fff3b0, transparent 75%), radial-gradient(ellipse 30% 12% at 20% 22%, rgba(255,255,255,0.9), transparent 70%), radial-gradient(ellipse 25% 10% at 78% 35%, rgba(255,255,255,0.85), transparent 70%), radial-gradient(ellipse 35% 12% at 60% 12%, rgba(255,255,255,0.7), transparent 70%), radial-gradient(ellipse 30% 10% at 30% 70%, rgba(255,255,255,0.6), transparent 70%), radial-gradient(ellipse 18% 8% at 12% 55%, rgba(255,255,255,0.55), transparent 70%), linear-gradient(#5aa9f0, #bfe3ff 70%, #e8f6ff)`,
     beach: `url("${svgURI(BEACH)}") center / cover no-repeat`,
     jungle: `url("${svgURI(JUNGLE)}") center / cover no-repeat`,
     circus: `radial-gradient(ellipse at 50% 110%, transparent 30%, rgba(0,0,0,0.35) 90%), repeating-conic-gradient(from 180deg at 50% -25%, #c8202a 0deg 5deg, #f6ecd6 5deg 10deg)`,
@@ -2685,6 +2725,7 @@
   function applyBackground() {
     const bg = BGS[S.opt.bg] ? S.opt.bg : 'plain';
     $('bg').style.background = BGS[bg] || 'none';
+    $('bg').className = 'bg-' + bg;
     document.body.classList.toggle('has-bg', bg !== 'plain');
   }
   function updateStats() {
@@ -2705,11 +2746,14 @@
     updateStats();
     modal.querySelectorAll('[data-opt]').forEach(seg => seg.querySelectorAll('button')
       .forEach(b => b.setAttribute('aria-pressed', String(b.dataset.val === vals[seg.dataset.opt]))));
+    const realOn = modal.querySelector('[data-opt="real"] [data-val="on"]');
+    realOn.textContent = S.realUnlocked ? 'On' : `Unlock (${fmt(REAL_UNLOCK_COST)})`;
+    $('musicVol').value = Math.round(S.musicVol * 100);
+    $('soundVol').value = Math.round(S.soundVol * 100);
     showTrack();
   }
   function applyLook() {
     document.body.classList.toggle('real', !!S.opt.real);
-    if (!S.opt.real && S.opt.style === 'body') init3D();
     if (S.opt.real) ['n' + S.needle, 'b_' + COLOUR_KEYS[S.look]].forEach(photo);
     applyColour(); applyHat();
     buildMonkeyImages(); applyNeedle(); applyBackground(); renderRow(); renderCrew(); renderSide();
@@ -2726,11 +2770,24 @@
     const key = seg.dataset.opt, val = b.dataset.val;
     if (key === 'music') { S.music = val === 'on'; if (S.music) startMusic(); else stopMusic(); }
     else if (key === 'sound') S.sound = val === 'on';
-    else if (key === 'real') { S.opt.real = val === 'on'; applyLook(); }
+    else if (key === 'real') {
+      if (!S.realUnlocked) {
+        if (val !== 'on' || S.pops < REAL_UNLOCK_COST) return;
+        S.pops -= REAL_UNLOCK_COST; S.realUnlocked = true;
+      }
+      S.opt.real = val === 'on'; applyLook();
+    }
     else { S.opt[key] = val; applyLook(); }
     syncSettings(); save();
   }));
   $('nextTrack').addEventListener('click', () => { initAudio(); nextTrack(); });
+  $('musicVol').addEventListener('input', e => { S.musicVol = +e.target.value / 100; applyVolume(); save(); });
+  let soundVolPreview;
+  $('soundVol').addEventListener('input', e => {
+    S.soundVol = +e.target.value / 100; applyVolume(); save();
+    clearTimeout(soundVolPreview);
+    soundVolPreview = setTimeout(() => { initAudio(); playPop(0.6); }, 120);
+  });
   $('credits').innerHTML = CREDITS.map(([what, who, lic, url]) =>
     `<li><a href="${esc(url)}" target="_blank" rel="noopener">${esc(what)}</a>: ${esc(who)}, ${esc(lic)}</li>`).join('');
   const resetBtn = $('resetBtn');
@@ -2743,8 +2800,8 @@
     }
     clearTimeout(resetArmed); resetArmed = null;
     resetBtn.textContent = 'Reset game'; resetBtn.classList.remove('warn');
-    const { sound, music, opt } = S;
-    S = migrate(fresh()); S.sound = sound; S.music = music; S.opt = opt;
+    const { sound, music, opt, musicVol, soundVol } = S;
+    S = migrate(fresh()); S.sound = sound; S.music = music; S.opt = opt; S.musicVol = musicVol; S.soundVol = soundVol;
     applyAll(); save(); closeSettings(); toast('Fresh start. One sewing pin and a red balloon.');
   });
 
@@ -2774,7 +2831,7 @@
     }
     if (sinceSave > 5) { sinceSave = 0; save(); }
     sinceFeed += dt;
-    if (sinceFeed > 1) { sinceFeed = 0; feedTick(); if (!modal.hidden) updateStats(); }
+    if (sinceFeed > 1) { sinceFeed = 0; feedTick(); maybeSpawnCameo(Date.now()); if (!modal.hidden) updateStats(); }
     updateHeader();
     decisionTick();
     cx.clearRect(0, 0, innerWidth, innerHeight);
